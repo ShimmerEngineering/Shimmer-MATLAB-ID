@@ -1,5 +1,5 @@
 
-Readme.txt file for Shimmer Matlab Instrument Driver  
+Readme txt file for Shimmer Matlab Instrument Driver  
 ----------------------------------------------------
 
 The Shimmer Matlab Instrument Driver package is a set of Matlab .m files designed to assist users of the 
