@@ -1,10 +1,10 @@
 function void = syncandparseexample( uuid, binFilePath, trialName, participantID)
 
-exe_path = 'VerisenseTools\VerisenseConfigureAndSyncConsoleApp\VerisenseConfigureAndSyncConsole.exe';
+exe_path = 'VerisenseConfigureAndSyncConsoleApp\VerisenseConfigureAndSyncConsole.exe';
 
 system([exe_path ' ' uuid ' DATA_SYNC ' binFilePath ' ' trialName ' ' participantID])
 
-system(['java -jar VerisenseFileParserPC.jar ' binFilePath '\' trialName '\' participantID])
+system(['java -jar FileParser\VerisenseFileParserPC.jar ' binFilePath '\' trialName '\' participantID])
 
 participantIDPath = [strrep(binFilePath,'\\','\') '\' trialName '\' participantID];
 participantIDDirectory = dir([participantIDPath '\*']);
