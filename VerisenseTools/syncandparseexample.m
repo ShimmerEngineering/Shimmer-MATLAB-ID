@@ -49,7 +49,14 @@ end
 end
 
 data = xlsread(filepath, '10:2000');
-plot(data(:,1))
-title('Accel X')
+plot(data(:,1),'color','blue')
+
+hold on
+plot(data(:,2),'color','red')
+plot(data(:,3),'color','green')
+hold off
+
+legend('Accel X', 'Accel Y', 'Accel Z')
+title('Accel')
 end
 
