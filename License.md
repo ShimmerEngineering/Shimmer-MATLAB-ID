@@ -7,7 +7,7 @@ SHIMMER RESEARCH LTD.**
     Shimmer's license of the APIs to Licensee and Licensee's use of the
     APIs.
 
-2.  **License Grant.**Subject to the terms and conditions of this
+2.  **License Grant.** Subject to the terms and conditions of this
     Agreement, Shimmer hereby grants to Licensee a non-exclusive,
     non-transferable license for up to ten (10) users to use the APIs
     solely with Shimmer's hardware.
@@ -40,7 +40,7 @@ SHIMMER RESEARCH LTD.**
 
 5.  **Fees.** The APIs are provided to Licensee without charge.
 
-6.  **[NO WARRANTIES]{.underline}. THE APIS AND ANY OTHER PRODUCTS OR
+6.  <ins>**NO WARRANTIES**</ins>. THE APIS AND ANY OTHER PRODUCTS OR
     SERVICES RELATED THERETO ARE PROVIDED AS IS AND AS AVAILABLE. TO THE
     MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, SHIMMER AND ITS
     LICENSORS DISCLAIM ANY AND ALL WARRANTIES, WRITTEN OR ORAL, EXPRESS
@@ -50,7 +50,7 @@ SHIMMER RESEARCH LTD.**
     RESPONSIBILITY FOR THEIR USE OF THE APIS, AND SHIMMER ASSUMES NO
     RESPONSIBILITY FOR SUCH USE.**
 
-7.  **[LIMITATION OF LIABILITY]{.underline}. TO THE MAXIMUM EXTENT
+7.  <ins>**LIMITATION OF LIABILITY**</ins>. TO THE MAXIMUM EXTENT
     PERMITTED BY APPLICABLE LAW, SHIMMER WILL NOT BE LIABLE TO LICENSEE
     FOR ANY DAMAGES ARISING OUT OF OR RELATED TO THIS AGREEMENT, HOWEVER
     CAUSED AND ON ANY THEORY OF LIABILITY AND EVEN IF SHIMMER HAS BEEN
