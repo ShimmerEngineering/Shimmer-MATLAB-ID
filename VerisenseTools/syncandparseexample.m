@@ -39,24 +39,56 @@ participantIDDirectory(ismember( {participantIDDirectory.name}, {'.', '..'})) = 
 
 parsedFilesPath = [participantIDPath '\' participantIDDirectory(1).name '\ParsedFiles'];
 parsedFilesDirectory = dir([parsedFilesPath '\*.csv']);
-filepath = [parsedFilesPath '\' parsedFilesDirectory(1).name];
+dirSize = size(parsedFilesDirectory);
+if dirSize(1) == 0
+    disp('Parsed file not found');
+    
+else
+    filepath = [parsedFilesPath '\' parsedFilesDirectory(1).name];
 
-for k = 1 : length(parsedFilesDirectory)
-if isempty(strfind(parsedFilesDirectory(k).name, 'Metadata'))
-    filepath = [parsedFilesPath '\' parsedFilesDirectory(k).name];
-    break
+    for k = 1 : length(parsedFilesDirectory)
+        if isempty(strfind(parsedFilesDirectory(k).name, 'Metadata'))
+            filepath = [parsedFilesPath '\' parsedFilesDirectory(k).name];
+            if ~isempty(strfind(parsedFilesDirectory(k).name, 'Accel'))
+                plot_type = 'Accel';
+            elseif ~isempty(strfind(parsedFilesDirectory(k).name, 'GSR'))
+                plot_type = 'GSR';
+            elseif ~isempty(strfind(parsedFilesDirectory(k).name, 'PPG'))
+                plot_type ='PPG';
+            end
+            break
+        end
+    end
+
+    switch plot_type
+        case 'Accel'
+            data = xlsread(filepath, '10:2000');
+            plot(data(:,1),'color','blue')
+            hold on
+            plot(data(:,2),'color','red')
+            plot(data(:,3),'color','green')
+            hold off
+            legend('Accel X', 'Accel Y', 'Accel Z')
+            title('Accel')
+        case 'GSR'
+            data = xlsread(filepath, '10:2000');
+            plot(data(:,1),'color','blue')
+            legend('GSR')
+            title('GSR')
+        case 'PPG'
+            data = xlsread(filepath, '10:2000');
+            plot(data(:,1),'color','red')
+            hold on
+            plot(data(:,2),'color','m')
+            plot(data(:,3),'color','green')
+            plot(data(:,4),'color','blue')
+            hold off
+            legend('PPG RED', 'PPG IR', 'PPG GREEN', 'PPG BLUE')
+            title('PPG')
+        otherwise
+            disp('plot does not exist')
+    end
+
 end
-end
-
-data = xlsread(filepath, '10:2000');
-plot(data(:,1),'color','blue')
-
-hold on
-plot(data(:,2),'color','red')
-plot(data(:,3),'color','green')
-hold off
-
-legend('Accel X', 'Accel Y', 'Accel Z')
-title('Accel')
 end
 
