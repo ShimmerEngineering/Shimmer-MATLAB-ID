@@ -1,3 +1,24 @@
+# Verisense Matlab API 
+Currently the Verisense Matlab Examples are released as a Pre-Alpha release
+
+Please refer to our [support policy](https://shimmersensing.com/support/wireless-sensor-networks-documentation/) on Pre-Alpha/Alpha Releases
+
+## Introduction
+These examples is to help users get started with using the Verisense device. The Verisense [datarecordingexample](https://github.com/ShimmerEngineering/Shimmer-MATLAB-ID/blob/master/VerisenseTools/datarecordingexample.m) is the best example to start with.
+
+
+## Hardware Supported
+- Verisense IMU
+- Verisense Pulse+ (_upcoming_)
+
+## Minimum Matlab Version Tested On
+- Matlab 12 (Windows)
+
+## Functionality Supported
+- Configuring via BLE (e.g. sampling rate, accel range)
+- Logged Sensor Data Syncing via BLE
+_note: syncing is the retrieval of logged sensor data in a binary file fomat. **this binary file can be [parsed using this Java app](https://github.com/ShimmerEngineering/Shimmer-C-API/tree/master/ShimmerBLE/FileParser), however users should be aware that we do not provide file parsing source code in C#**_
+
 ## VerisenseConfigureAndSyncConsoleApp
 The console app is used to communicate with the Verisense device. It can be used to configure the Verisense device and run data sync. For more details regarding the console app, can refer to [VerisenseConfigureAndSyncConsoleApp](https://github.com/ShimmerEngineering/Shimmer-C-API/blob/master/ShimmerBLE/ConsoleTools/README.md)
 
@@ -11,7 +32,7 @@ HOW TO USE:
 - Open the repository in matlab
 - Run the syncandparseexample function with the following parameters
     - uuid of the Verisense device, e.g. '00000000-0000-0000-0000-d02b463da2bb'
-    - the path of the binary files, e.g. 'C:\\\\Users\\\\WeiWentan\\\\Desktop'
+    - the path of the binary files, e.g. 'C:\\\\Users\\\\VerisenseUser\\\\Desktop'
     - the trial name, e.g. 'trialA'
     - the participant ID, e.g. 'participantB'
 
