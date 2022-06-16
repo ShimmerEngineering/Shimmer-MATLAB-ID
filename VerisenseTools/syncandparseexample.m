@@ -44,7 +44,8 @@ if dirSize(1) == 0
     disp('Parsed file not found');
 else
     for k = 1 : length(parsedFilesDirectory)
-        if isempty(strfind(parsedFilesDirectory(k).name, 'Metadata'))
+        % ignore metadata files
+        if isempty(strfind(parsedFilesDirectory(k).name, 'Metadata')) 
             filepath = [parsedFilesPath '\' parsedFilesDirectory(k).name];
             figure(k)
             plotfile(filepath)

@@ -14,9 +14,11 @@ function void = plotfile( filepath)
 filename = regexp(filepath,'\','split');
 filename = char(filename(end));
 
-
+plot_type = '';
 if ~isempty(strfind(filename, 'Accel'))
     plot_type = 'Accel';
+elseif ~isempty(strfind(filename, 'Gyro'))
+    plot_type ='Gyro';
 elseif ~isempty(strfind(filename, 'GSR'))
     plot_type = 'GSR';
 elseif ~isempty(strfind(filename, 'PPG'))
@@ -32,6 +34,14 @@ switch plot_type
         plot(data(:,3),'color','green')
         hold off
         legend('Accel X', 'Accel Y', 'Accel Z')
+    case 'Gyro'
+        data = xlsread(filepath);
+        plot(data(:,1),'color','blue')
+        hold on
+        plot(data(:,2),'color','red')
+        plot(data(:,3),'color','green')
+        hold off
+        legend('Gyro X', 'Gyro Y', 'Gyro Z')
     case 'GSR'
         data = xlsread(filepath);
         plot(data(:,1),'color','blue')
