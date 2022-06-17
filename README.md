@@ -583,3 +583,17 @@ Modifications
 - Bugfix -> HardwareCompatibilityCode for Shimmer3 IMU (SR31).
 - Minor other bugfixes.
 - Examples now also write signal format/units to file.
+
+#############################################################
+
+Rev2.9
+
+Release date 19/09/2017.
+
+
+Changes since Rev 2.8
+=====================
+
+Modifications
+-------------
+- Added Verisense tools
