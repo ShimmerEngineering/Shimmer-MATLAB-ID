@@ -1,62 +1,31 @@
-
-Readme txt file for Shimmer Matlab Instrument Driver  
-----------------------------------------------------
-
+# Introduction
 The Shimmer Matlab Instrument Driver package is a set of Matlab .m files designed to assist users of the 
-Shimmer2, Shimmer2r and Shimmer3 in the development of Shimmer based applications in Matlab.
+Shimmer2, Shimmer2r, Shimmer3 and Verisense in the development of Shimmer based applications in Matlab. Please proceed [to](https://github.com/ShimmerEngineering/Shimmer-MATLAB-ID/tree/master/VerisenseTools) for Verisense.
 
-The driver package contains the following items:
- 
- - Shimmer Matlab Instrument Driver User Manual 
- - Sampling Rate Table.txt (in resources directory)
- - Readme.txt (this file)
- - ShimmerBiophysicalProcessingLibrary_Rev_X_Y.jar
- - ReadmeShimmerBiophysicalProcessingLibrary.txt
+For Shimmer 3 devices to begin using the Shimmer Matlab Instrument Driver please refer to the
+Shimmer Matlab Instrument Driver User Manual. In order to communicate changes more effectively we will be transitioning to the use of Github and will no longer be updating the user guide from Rev2.9 onwards. We will maintain providing keeping the user guide in the repository for Shimmer3 users.
 
- - Shimmer Matlab Instrument Driver   
-    ShimmerHandleClass.m
-    
- - Examples and supporting Matlab scripts   
-    plotandwriteexample.m
-    twoshimmerexample.m
-    orientation3Dexample.m
-    plotandwriteecgexample.m
-    plotandwriteemgexample.m
-    plotandwriteexgtestsignalexample.m
-    plotandwriteecgleadoffdetectionexample
-    plotandwriteemgleadoffdetectionexample
-    ppgtoheartrateexample.m
-    ecgtoheartrateexample.m
-    SetEnabledSensorsMacrosClass.m
-    FilterClass.m
-          
-    in quaterion directory:
-     quat2angleaxis.m                                 
-     quatconjugate.m
-     quatmultiply.m
-     quatrotate.m
-     
-To begin using the Shimmer Matlab Instrument Driver please refer to the
-Shimmer Matlab Instrument Driver User Manual.
+# Rev2.9
+Release date 17/06/2022
 
-#############################################################
+## Changes since Rev 2.8
+### Modifications
+- Added Verisense tools
 
-Rev0.1 is the original beta release. 
+# Revision History
+## Rev0.1 is the original beta release. 
 Release date 02/02/2012.
 
-#############################################################
-
-Rev0.2 is the original beta release with bug fixes and minor 
+## Rev0.2 is the original beta release with bug fixes and minor 
 modifications. 
 Release date 17/02/2012.
 
 
-Changes since Rev 0.1
-=====================
+## Changes since Rev 0.1
+
 
 Known Bugs
 ----------
-
 Bug ID. 0.1.1 
 Bug Description: Trying to disconnect when already disconnected generates an error.
 Bug Status: Fixed.
@@ -70,8 +39,7 @@ Bug Description: Wait for acknowledgment timing out on some systems. Changed Shi
 Bug Status: Fixed.
 
 
-Modifications
--------------
+### Modifications
 
 ShimmerHandleClass.m -> waitforack
 Added tic/toc to improve accuracy of timeout functionality
@@ -80,15 +48,15 @@ Added tic/toc to improve accuracy of timeout functionality
 Minor updates and corrections to Matlab Library User Manual
 
 
-#############################################################
 
-Rev0.3 is the original beta release with bug fixes and minor 
+
+## Rev0.3 is the original beta release with bug fixes and minor 
 modifications. 
 Release date 27/02/2012.
 
 
-Changes since Rev 0.2
-=====================
+## Changes since Rev 0.2
+
 
 Known Bugs
 ----------
@@ -102,8 +70,7 @@ Bug Description: Byte sequence 13 10 was being interpreted as 'carriage return' 
 Bug Status: Fixed.
 
 
-Modifications
--------------
+### Modifications
 
 plotandwriteexample.m 
 Data is now written in tab delimited format as opposed to comma delimited format.
@@ -112,32 +79,31 @@ Data is now written in tab delimited format as opposed to comma delimited format
 Minor updates and corrections to Matlab Library User Manual
 
 
-#############################################################
 
-Rev0.4 is the original beta release with bug fixes and minor 
+
+## Rev0.4 is the original beta release with bug fixes and minor 
 modifications. 
 Release date 29/02/2012.
 
 
-Changes since Rev 0.3
-=====================
+## Changes since Rev 0.3
 
-Modifications
--------------
+
+### Modifications
 Name change from Shimmer Matlab Library to Shimmer Matlab Instrument Driver.
 
 Appropriate changes to User Manual to reflect name change.
 
 
-#############################################################
 
-Rev0.5 is the original beta release with a bug fix 
+
+## Rev0.5 is the original beta release with a bug fix 
 
 Release date 24/04/2012.
 
 
-Changes since Rev 0.4
-=====================
+## Changes since Rev 0.4
+
 
 Known Bugs
 ----------
@@ -147,10 +113,10 @@ Bug Description: Magnetometer signal erroneous when expected value is negative.
 Bug Status: Fixed.
 
 
-#############################################################
 
 
-Rev1.0 is the first full release. It is based on the original beta release 
+
+## Rev1.0 is the first full release. It is based on the original beta release 
 with significant additions to the functionality. The additions include the
 ability to retrieve both uncalibrated and calibrated data and a method
 to check for any dropped packets.
@@ -158,8 +124,8 @@ to check for any dropped packets.
 Release date 03/07/2012.
 
 
-Changes since Rev 0.5
-=====================
+## Changes since Rev 0.5
+
 
 Known Bugs
 ----------
@@ -190,17 +156,17 @@ getpercentageofpacketsreceived
 getdata
 
 
-#############################################################
 
 
 
-Rev1.1
+
+## Rev1.1
 
 Release date 13/08/2012.
 
 
-Changes since Rev 1.0
-=====================
+## Changes since Rev 1.0
+
 
 Known Bugs
 ----------
@@ -209,15 +175,15 @@ Bug ID. 1.0.1
 Bug Description: Any sampling rate above 255Hz is stored as 255. 
 Bug Status: Fixed.
 
-#############################################################
 
-Rev1.2
+
+## Rev1.2
 
 Release date 13/08/2012.
 
 
-Changes since Rev 1.1
-=====================
+## Changes since Rev 1.1
+
 
 Known Bugs
 ----------
@@ -226,18 +192,17 @@ Bug ID. 1.1.1
 Bug Description: Any sampling rate above 255Hz is stored as 255 when an inquiry is done. 
 Bug Status: Fixed.
 
-#############################################################
 
-Rev1.3
+
+## Rev1.3
 
 Release date 21/02/2013.
 
 
-Changes since Rev 1.2
-=====================
+## Changes since Rev 1.2
 
-Modifications
--------------
+
+### Modifications
 
 The command setpmux has been set to a private function, the pmux is set automatically now depending 
 on whether battery voltage monitoring or Exp Board is enabled. To enabled batt voltage monitoring the following methods were updated/made
@@ -262,18 +227,17 @@ Bug Description: setpmux and setfivevoltreg command not working.
 Bug Status: Fixed.
 
 
-#############################################################
 
-Rev1.4
+
+## Rev1.4
 
 Release date 20/03/2013.
 
 
-Changes since Rev 1.3
-=====================
+## Changes since Rev 1.3
 
-Modifications
--------------
+
+### Modifications
 
 - Battery monitoring
 - Low Battery notification (only usable with BTStream)
@@ -284,18 +248,17 @@ Modifications
 - ECG and EMG units are mVolts* when default calibration parameters are used	
 
 
-#############################################################
 
-Rev1.5
+
+## Rev1.5
 
 Release date 27/06/2013.
 
 
-Changes since Rev 1.4
-=====================
+## Changes since Rev 1.4
 
-Modifications
--------------
+
+### Modifications
 
 - Magnetometer configuration (range and data rate).
 - 3D orientation estimation (in quaternion format); note that accel, gyro and mag must be enabled.
@@ -305,67 +268,63 @@ Modifications
 - Fixed FirmwareVersion to take a non-integer value.
 
 
-#############################################################
 
-Rev1.6
+
+## Rev1.6
 
 Release date 27/06/2013.
 
 
-Changes since Rev 1.5
-=====================
+## Changes since Rev 1.5
 
-Modifications
--------------
+
+### Modifications
 
 - Updated to work with Shimmer3
 
 
-#############################################################
 
-Rev1.7
+
+## Rev1.7
 
 Release date 11/10/2013.
 
 
-Changes since Rev 1.6
-=====================
+## Changes since Rev 1.6
 
-Modifications
--------------
+
+### Modifications
 
 - Updated to work with BTStream and Boilerplate 
 - Fixed twos complement method
 
 
-#############################################################
 
-Rev1.8
+
+## Rev1.8
 
 Release date 14/10/2013.
 
 
-Changes since Rev 1.7
-=====================
+## Changes since Rev 1.7
 
-Modifications
--------------
+
+### Modifications
 
 - Added pressure sensor support for Shimmer3
 
 
-#############################################################
 
-Rev1.9
+
+## Rev1.9
 
 Release date xx/xx/2013.
 
 
-Changes since Rev 1.8
-=====================
+## Changes since Rev 1.8
 
-Modifications
--------------
+
+### Modifications
 
 - Updated twos complement method because current use of BITCMP(x,n) is being deprecated
 - Updated code to support Low Noise Accel and Wide Range Accel
@@ -374,52 +333,49 @@ Modifications
 - Added minor support for EXG for internal testing, users should wait for official release
 
 
-#############################################################
 
-Rev2.0
+
+## Rev2.0
 
 Release date 29/01/2014.
 
 
-Changes since Rev 1.9
-=====================
+## Changes since Rev 1.9
 
-Modifications
--------------
+
+### Modifications
 
 - Removed old folders (fw) and old scripts which dont belong
 
 
-#############################################################
 
-Rev2.1 
+
+## Rev2.1 
 
 Release date 21/03/2014.
 
 
-Changes since Rev 2.0
-=====================
+## Changes since Rev 2.0
 
-Modifications
--------------
+
+### Modifications
 
 - ExG support for Shimmer3 (including examples)
 - Add battlimitwarning for Shimmer3
 - Revised comments and warnings
 
 
-#############################################################
 
-Rev2.2 
+
+## Rev2.2 
 
 Release date 01/07/2014.
 
 
-Changes since Rev 2.1
-=====================
+## Changes since Rev 2.1
 
-Modifications
--------------
+
+### Modifications
 
 - Bridge Amplifier support for Shimmer3 (Shimmer2/2r equivalent is known as Strain Gauge)
 - Improved filter implementation (using FilterClass.m)
@@ -433,9 +389,9 @@ Modifications
 - Firmware compatibility codes
 
 
-#############################################################
 
-Rev2.3
+
+## Rev2.3
  
 Release date 13/10/2015.
 
@@ -444,11 +400,10 @@ Errata
 ------
 - Version number in ShimmerHandleClass was not updated (v2.2)
 
-Changes since Rev 2.2
-=====================
+## Changes since Rev 2.2
 
-Modifications
--------------
+
+### Modifications
 
 - Added SetEnabledSensorsMacrosClass, disableallsensors() - for easier enabling/disabling sensors.
 - Improved existing examples. 
@@ -463,75 +418,69 @@ Modifications
 - plotandwriteecgleadoffdetectionexample
 - plotandwriteemgleadoffdetectionexample
 
-Fixed Bugs
-----------
+### Fixed Bugs
 - 16BIT ExG is parsed incorrectly - interpretdatapacketformat() 
 - Strain Gauge data incorrectly calibrated; gain was multiplied by a factor 2.8, while this should be a factor 1.
 - Bridge Amplifier+ data incorrectly calibrated; gain was multiplied by a factor 2.8, while this should be a factor 1.
 - Incorrect default calibration parameters Shimmer3 magnetometer. (Minor impact: for a few ranges test values were used instead of default values from datasheet, alignment matrix was multiplied by -1.)
 
 
-#############################################################
 
-Rev2.4 
+
+## Rev2.4 
 
 Release date 06/03/2015.
 
 
-Changes since Rev 2.3
-=====================
+## Changes since Rev 2.3
 
-Modifications
--------------
+
+### Modifications
 
 - Added resettodefaultconfiguration() - resets Shimmer default configuration for Shimmer3.
 - Class properties are now updated when setconfigbytes() / setconfigbyte0() is called.
 - Autoset data rates of Wide Range Accel, Gyro, Mag and ExG when Shimmer sampling rate is set.   
 
-Fixed Bugs
-----------
+### Fixed Bugs
 - getorientation3D() - wrong variablename internalBoard.
 - parseinquiryresponse() - class property ConfigByte1 incorrectly updated.
 
 
-#############################################################
 
-Rev2.5 
+
+## Rev2.5 
 
 Release date 12/05/2015.
 
 
-Changes since Rev 2.4
-=====================
+## Changes since Rev 2.4
 
-Modifications
--------------
+
+### Modifications
 - Changed recommended filter cut-off frequency to 5Hz in plotandwriteemgexample
 - Update: ShimmerBiophysicalProcessingLibrary_Rev_0_8.jar
 - getgsrdata() -> reverted back to Shimmmer2r values for Shimmer3
 - Modified getpercentageofpacketsreceived() to accommodate for minor possible variations in internal Shimmer clock
 
 
-Fixed Bugs
-----------
+### Fixed Bugs
 - Updated readfirmwareversion to be compatible with versions > 0.6.0/0.4.0 of BtStream/LogAndStream.
 - Fixed bug in estimategyrooffset() for the case when GyroBuffer = [0 0 0];
 - DAccelCalParametersOV / DAccelCalParameterSM / DAccelCalParametersOVAM had Shimmer2r values -> changed to Shimmer3 values (2g range).
 - Added missing case for getaccelrange==0 in getcalibrationparameters().
 
 
-#############################################################
 
-Rev2.6 
+
+## Rev2.6 
 
 Release date dd/mm/yyyy.
 
 
-Changes since Rev 2.5
-=====================
+## Changes since Rev 2.5
 
-Modifications
--------------
+
+### Modifications
 - Updated/corrected help comments for getdeprecateddata()/getdata().
 - Updated ShimmerBiophysicalProcessingLibrary + Readme to Rev_0_10. 
 - Updated ecgtoheartrateexample for new version of ShimmerBiophysicalProcessingLibrary - with improved ECGtoHR algorithm.
@@ -550,50 +499,36 @@ Modifications
 - Added convertUnixTimeMillisecondsToMatlabTime() / convertMatlabTimeToUnixTimeMilliseconds()
 
 
-#############################################################
 
-Rev2.7 
+
+## Rev2.7 
 
 Release date 14/08/2017.
 
 
-Changes since Rev 2.6
-=====================
+## Changes since Rev 2.6
 
-Modifications
--------------
+
+### Modifications
 - Added support for new IMU/BMP sensors. Based on 'HardwareCompatibilityCode', see determinehwcompcode().
 - Added Pressure/temperature example - BMP180/BMP280.
 - Minor comment fixes in examples.   
 - Updated getexpboardid() - for SR31 and unified boards: SR47-49.
 - setaccelrate() - added rate setting '9' - 1344Hz for LSM303DLHC.
 
-#############################################################
 
-Rev2.8
+
+## Rev2.8
 
 Release date 19/09/2017.
 
 
-Changes since Rev 2.7
-=====================
+## Changes since Rev 2.7
 
-Modifications
--------------
+
+### Modifications
 - Bugfix -> HardwareCompatibilityCode for Shimmer3 IMU (SR31).
 - Minor other bugfixes.
 - Examples now also write signal format/units to file.
 
-#############################################################
 
-Rev2.9
-
-Release date 19/09/2017.
-
-
-Changes since Rev 2.8
-=====================
-
-Modifications
--------------
-- Added Verisense tools
