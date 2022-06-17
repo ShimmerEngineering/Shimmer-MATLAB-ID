@@ -10,7 +10,13 @@ Release date 17/06/2022
 
 ## Changes since Rev 2.8
 ### Modifications
-- Added Verisense tools
+Added Verisense tools 
+
+Readme updated
+
+User guide added to resource folder 
+
+<br/><br/>
 
 # Revision History
 ## Rev0.1 is the original beta release. 
