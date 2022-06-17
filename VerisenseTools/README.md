@@ -13,6 +13,7 @@ These examples is to help users get started with using the Verisense device. The
 
 ## Minimum Matlab Version Tested On
 - Matlab 12 (Windows)
+_Note:_ The provided Verisense Matlab examples uses the c# API executable example provided [here](https://github.com/ShimmerEngineering/Shimmer-C-API/tree/master/ShimmerBLE/ConsoleTools/VerisenseConfigureAndSyncConsole) to communicate with the Verisense device via BLE. While the example does support linux (tested on Ubuntu) we've not tested it with Matlab running on linux. 
 
 ## Functionality Supported
 - Configuring via BLE, we currently only support a limited amount of [default configurations](https://github.com/ShimmerEngineering/Shimmer-C-API/wiki/Verisense-Default-Configurations), do get in touch with us if you require a different set of configurations
