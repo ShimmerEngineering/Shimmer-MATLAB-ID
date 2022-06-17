@@ -15,7 +15,7 @@ These examples is to help users get started with using the Verisense device. The
 - Matlab 12 (Windows)
 
 ## Functionality Supported
-- Configuring via BLE (e.g. sampling rate, accel range)
+- Configuring via BLE, we currently only support a limited amount of [default configurations](https://github.com/ShimmerEngineering/Shimmer-C-API/wiki/Verisense-Default-Configurations), do get in touch with us if you require a different set of configurations
 - Logged Sensor Data Syncing via BLE
 _note: syncing is the retrieval of logged sensor data in a binary file fomat. **this binary file can be [parsed using this Java app](https://github.com/ShimmerEngineering/Shimmer-C-API/tree/master/ShimmerBLE/FileParser), however users should be aware that we do not provide file parsing source code in C#**_
 
