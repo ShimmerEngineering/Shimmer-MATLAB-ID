@@ -18,7 +18,7 @@ _Note:_ The provided Verisense Matlab examples uses the c# API executable exampl
 ## Functionality Supported
 - Configuring via BLE, we currently only support a limited amount of [default configurations](https://github.com/ShimmerEngineering/Shimmer-C-API/wiki/Verisense-Default-Configurations), do get in touch with us if you require a different set of configurations
 - Logged Sensor Data Syncing via BLE
-_note: syncing is the retrieval of logged sensor data in a binary file fomat. **this binary file can be [parsed using this Java app](https://github.com/ShimmerEngineering/Shimmer-C-API/tree/master/ShimmerBLE/FileParser), however users should be aware that we do not provide file parsing source code in C#**_
+_note: syncing is the retrieval of logged sensor data in a binary file fomat. **this binary file can be [parsed using this Java app](https://github.com/ShimmerEngineering/Shimmer-MATLAB-ID/tree/master/VerisenseTools/FileParser), however users should be aware that we do not provide file parsing source code in C#**_
 
 ## VerisenseConfigureAndSyncConsoleApp
 The console app is used to communicate with the Verisense device. It can be used to configure the Verisense device and run data sync. For more details regarding the console app, can refer to [VerisenseConfigureAndSyncConsoleApp](https://github.com/ShimmerEngineering/Shimmer-C-API/blob/master/ShimmerBLE/ConsoleTools/README.md)
