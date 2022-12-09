@@ -15,10 +15,13 @@ end
 
 if resolution~=0
     temp = ceil(1 / resolution);
-    data.data = ceil(data.data * temp) / temp;
+    data.data = round(data.data * temp) / temp;
 end
 
 data.data = data.data * alignment;
+
+% data.data(data.data > 4) = 4;
+% data.data(data.data < -4) = -4;
 
 csvwrite('combined_file.csv', data.data);
 
