@@ -77,3 +77,19 @@ HOW TO USE:
     - the path of the binary files, e.g. 'C:\\\\Users\\\\WeiWentan\\\\Desktop'
     - the trial name, e.g. 'trialA'
     - the participant ID, e.g. 'participantB'
+    
+## updatedata.m
+This functon is used to modify the existing data for ASM-2255 by changing the resolution, adding noise and offset, etc.
+
+HOW TO USE:
+- Run the following command with the parameters in matlab
+```
+filename = 'C:\Users\example\Desktop\CombinedFiles\combined_file.csv'
+noise = 0.0016
+offset = 0.06
+resolution = 0.002
+alignment = eye(3)
+updatedata(filename, noise, offset, resolution, alignment)
+```
+- Note thta you will need to manually add the header for the processed file
+    - open the processed file in notepad, copy the original header to the file
