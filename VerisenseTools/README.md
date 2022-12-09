@@ -82,7 +82,7 @@ HOW TO USE:
 This functon is used to modify the existing data for ASM-2255 by changing the resolution, adding noise and offset, etc.
 
 HOW TO USE:
-- Run the following command with the parameters in matlab
+- Run the command with the following parameters in matlab
 ```
 filename = 'C:\Users\example\Desktop\CombinedFiles\combined_file.csv'
 noise = 0.0016
@@ -91,5 +91,5 @@ resolution = 0.002
 alignment = eye(3)
 updatedata(filename, noise, offset, resolution, alignment)
 ```
-- Note thta you will need to manually add the header for the processed file
+- Note that you will need to manually add the header for the processed file
     - open the processed file in notepad, copy the original header to the file
