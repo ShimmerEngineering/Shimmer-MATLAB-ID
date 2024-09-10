@@ -9,6 +9,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JTextField;
 
 import com.shimmerresearch.bluetooth.ShimmerBluetooth.BT_STATE;
 import com.shimmerresearch.driver.BasicProcessWithCallBack;
@@ -22,11 +23,10 @@ import com.shimmerresearch.pcDriver.ShimmerPC;
 
 public class ShimmerJavaClass {
     private ShimmerPC shimmer;
-    private String comPort = "COM8";
+    private String comPort;
     private SensorDataReceived sdr = new SensorDataReceived();
     private String[] channelNames;
-    private final Queue<float[]> dataQueue = new ConcurrentLinkedQueue<>();
-
+    private final Queue<float[]> dataQueue = new ConcurrentLinkedQueue<float[]>();
     public static void main(String[] args) {
         ShimmerJavaClass example = new ShimmerJavaClass();
         example.createAndShowGUI();
@@ -39,6 +39,7 @@ public class ShimmerJavaClass {
 
         JPanel panel = new JPanel();
 
+        JTextField inputComPort = new JTextField("COM3");
         JButton connectButton = new JButton("Connect");
         JButton disconnectButton = new JButton("Disconnect");
         JButton startButton = new JButton("Start Streaming");
@@ -47,6 +48,7 @@ public class ShimmerJavaClass {
         connectButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+            	comPort = inputComPort.getText();
                 connectDevice(comPort);
             }
         });
@@ -62,6 +64,12 @@ public class ShimmerJavaClass {
             @Override
             public void actionPerformed(ActionEvent e) {
                 startStreaming();
+                
+              while(true) {
+            	if(!dataQueue.isEmpty()) {
+                    readData();
+            	}
+            }
             }
         });
 
@@ -72,16 +80,18 @@ public class ShimmerJavaClass {
             }
         });
 
+        panel.add(inputComPort);
         panel.add(connectButton);
         panel.add(disconnectButton);
         panel.add(startButton);
         panel.add(stopButton);
         frame.add(panel);
+        
         frame.setVisible(true);
     }
 
     public void connectDevice(String comPort) {
-        shimmer = new ShimmerPC("Test");
+        shimmer = new ShimmerPC(comPort);
         shimmer.connect(comPort, "");
         sdr.setWaitForData(shimmer);
     }
@@ -100,23 +110,6 @@ public class ShimmerJavaClass {
         } catch (ShimmerException e) {
             e.printStackTrace();
         }
-        
-//        try {
-//			Thread.sleep(1000);
-//		} catch (InterruptedException e1) {
-//			// TODO Auto-generated catch block
-//			e1.printStackTrace();
-//		}
-//        
-//        while(true) {
-//            try {
-//    			Thread.sleep(8);
-//    	        readData();
-//    		} catch (InterruptedException e) {
-//    			// TODO Auto-generated catch block
-//    			e.printStackTrace();
-//    		}
-//        }
     }
 
     public void stopStreaming() {
@@ -125,9 +118,9 @@ public class ShimmerJavaClass {
 
     public String[] retrieveSensorChannels() {
         LinkedHashMap<String, ChannelDetails> mapOfAllChannels = shimmer.getMapOfAllChannelsForStoringToDB(COMMUNICATION_TYPE.BLUETOOTH, null, false, false);
-        List<ChannelDetails> listOfChannelDetails = new ArrayList<>(mapOfAllChannels.values());
+        List<ChannelDetails> listOfChannelDetails = new ArrayList<ChannelDetails>(mapOfAllChannels.values());
 
-        List<String> channelNamesList = new ArrayList<>();
+        List<String> channelNamesList = new ArrayList<String>();
         for (ChannelDetails channel : listOfChannelDetails) {
             channelNamesList.add(channel.mObjectClusterName);
         }
@@ -154,10 +147,10 @@ public class ShimmerJavaClass {
         dataQueue.add(data);
     }
     
-//    public void readData() { //Test receive data for all Object Cluster
-//    	float[] data = receiveData();
-//    	System.out.println("Timestamp : " + data[4] + "\nAccel_LN_X : " + data[0]);
-//    }
+    public void readData() { //Test receive data for all Object Cluster
+    	float[] data = receiveData();
+    	System.out.println("Timestamp : " + data[4] + "\nAccel_LN_X : " + data[0]);
+    }
 
     public class SensorDataReceived extends BasicProcessWithCallBack {
 
