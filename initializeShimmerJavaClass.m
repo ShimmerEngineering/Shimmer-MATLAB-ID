@@ -1,10 +1,11 @@
-function ShimmerPC = InitializeShimmerJavaClass()
+function ShimmerPC = initializeShimmerJavaClass()
 %INITIALIZESHIMMERJAVACLASS Initialize Shimmer Java Class and return ShimmerPC instance
 %   This function sets up the required Java classpaths and initializes the
 %   BasicShimmerBluetoothManagerPc instance for use in Shimmer applications.
 
     clear java;
 
+    javaaddpath('ShimmerBiophysicalProcessingLibrary_Rev_0_10.jar');
     javaaddpath('libs/ShimmerJavaClass.jar');
     javaaddpath('libs/jssc-2.9.6.jar');
     javaaddpath('libs/vecmath-1.3.1.jar');

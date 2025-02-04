@@ -29,6 +29,10 @@ obj.mBluetoothManager.connectShimmerThroughCommPort(comPort);
 
 shimmer = obj.mBluetoothManager.getShimmerDeviceBtConnected(comPort);
 
+accelSensorId = 2;
+magSensorId = 32;
+GyroSensorId = 30;
+
 %%
 shimmerClone = shimmer.deepClone();
 shimmerClone.setSamplingRateShimmer(51.2);
