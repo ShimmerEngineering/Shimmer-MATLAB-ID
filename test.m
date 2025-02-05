@@ -12,3 +12,10 @@ captureDuration = 20;
 fileName = 'DefaultTrial_Session1_test_Calibrated_PC_PPG';
 
 newppgtoheartrateexample(comPort, PPGChannelNum, captureDuration, fileName);
+
+%%
+comPort = 'COM3';
+captureDuration = 20;
+fileName = 'DefaultTrial_Session1_test_Calibrated_PC_PRESS';
+
+newplotandwritepressureandtemperatureexample(comPort, captureDuration, fileName)
