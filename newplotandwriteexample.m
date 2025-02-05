@@ -29,6 +29,7 @@ if success
 
     shimmerClone = obj.shimmer.deepClone();
     shimmerClone.setSamplingRateShimmer(51.2);
+    shimmerClone.disableAllSensors()
     shimmerClone.setEnabledAndDerivedSensorsAndUpdateMaps(0,0);
     shimmerClone.setSensorEnabledState(accelSensorId, true);
     shimmerClone.setSensorEnabledState(magSensorId, true);
