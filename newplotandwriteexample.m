@@ -1,13 +1,7 @@
-ShimmerPC = initializeShimmerJavaClass();
+function void = newplotandwriteexample(comPort, captureDuration, fileName)
+%% definitions
 
-import com.shimmerresearch.driverUtilities.AssembleShimmerConfig;
-import com.shimmerresearch.driver.ShimmerDevice;
-import com.shimmerresearch.tools.bluetooth.BasicShimmerBluetoothManagerPc;
-import com.shimmerresearch.driver.ObjectCluster;
-
-comPort = 'COM3'
-
-fileName = 'DefaultTrial_Session1_test_Calibrated_SD'
+shimmer = ShimmerDeviceHandler(comPort);                                   % Define shimmer as a ShimmerHandle Class instance with comPort1
 
 firsttime = true;
 
@@ -19,48 +13,43 @@ numSamples = 0;
 
 %%
 
-obj = com.shimmerresearch.tools.matlab.ShimmerJavaClass();
+[success, obj] = shimmer.connect();
 
-%%
+if success
+    
+    if (obj.shimmer.getHardwareVersion() == 10)
+        accelSensorId = 37;
+        magSensorId = 41;
+        GyroSensorId = 38;
+    else
+        accelSensorId = 2;
+        magSensorId = 32;
+        GyroSensorId = 30;
+    end
 
-obj.mBluetoothManager.connectShimmerThroughCommPort(comPort);
+    shimmerClone = obj.shimmer.deepClone();
+    shimmerClone.setSamplingRateShimmer(51.2);
+    shimmerClone.setEnabledAndDerivedSensorsAndUpdateMaps(0,0);
+    shimmerClone.setSensorEnabledState(accelSensorId, true);
+    shimmerClone.setSensorEnabledState(magSensorId, true);
+    shimmerClone.setSensorEnabledState(GyroSensorId, true);
 
-%%
+    commType = javaMethod('valueOf', 'com.shimmerresearch.driver.Configuration$COMMUNICATION_TYPE', 'BLUETOOTH');
+    com.shimmerresearch.driverUtilities.AssembleShimmerConfig.generateSingleShimmerConfig(shimmerClone, commType);
+    obj.shimmer.configureFromClone(shimmerClone);
 
-shimmer = obj.mBluetoothManager.getShimmerDeviceBtConnected(comPort);
+    btState = javaMethod('valueOf', 'com.shimmerresearch.bluetooth.ShimmerBluetooth$BT_STATE', 'CONFIGURING');
+    obj.shimmer.operationStart(btState);
+    pause(20);
 
-accelSensorId = 2;
-magSensorId = 32;
-GyroSensorId = 30;
+    if shimmer.start()
+        plotData = [];                                               
+        timeStamp = [];
 
-%%
-shimmerClone = shimmer.deepClone();
-shimmerClone.setSamplingRateShimmer(51.2);
-shimmerClone.setEnabledAndDerivedSensorsAndUpdateMaps(0,0);
-shimmerClone.setSensorEnabledState(2, true);
-shimmerClone.setSensorEnabledState(32, true);
-shimmerClone.setSensorEnabledState(30, true);
+        elapsedTime = 0;                                                             
+        tic;  
 
-commType = javaMethod('valueOf', 'com.shimmerresearch.driver.Configuration$COMMUNICATION_TYPE', 'BLUETOOTH');
-AssembleShimmerConfig.generateSingleShimmerConfig(shimmerClone, commType);
-shimmer.configureFromClone(shimmerClone);
-
-btState = javaMethod('valueOf', 'com.shimmerresearch.bluetooth.ShimmerBluetooth$BT_STATE', 'CONFIGURING');
-shimmer.operationStart(btState);
-
-%% 
-shimmer.startStreaming();
-
-%%
-
-plotData = [];                                               
-timeStamp = [];
-captureDuration = 20;
-
-elapsedTime = 0;                                                             
-tic;  
-
-plotData = [];                                               
+        plotData = [];                                               
         timeStamp = [];
         
         h.figure1=figure('Name','Shimmer 1 signals' );                     % Create a handle to figure for plotting data from shimmer
@@ -73,7 +62,7 @@ plotData = [];
                       
             pause(DELAY_PERIOD);                                           % Pause for this period of time on each iteration to allow data to arrive in the buffer
             
-            data = obj.receiveData();                                      % Read the latest data from shimmer data buffer, signalFormatArray defines the format of the data and signalUnitArray the unit
+            data = obj.obj.receiveData();                                  % Read the latest data from shimmer data buffer, signalFormatArray defines the format of the data and signalUnitArray the unit
             newData = data(1);
             signalNameArray = data(2);
             signalFormatArray = data(3);
@@ -132,7 +121,7 @@ plotData = [];
                 legendName1 = [char(signalFormatArray(signalIndex1)) ' ' char(signalNameArray(signalIndex1)) ' (' char(signalUnitArray(signalIndex1)) ')'];
                 legendName2 = [char(signalFormatArray(signalIndex2)) ' ' char(signalNameArray(signalIndex2)) ' (' char(signalUnitArray(signalIndex2)) ')'];
                 legendName3 = [char(signalFormatArray(signalIndex3)) ' ' char(signalNameArray(signalIndex3)) ' (' char(signalUnitArray(signalIndex3)) ')'];
-                legend(legendName1,legendName2,legendName3); % Add legend to plot
+                legend(legendName1,legendName2,legendName3);               % Add legend to plot
                 xlim([sampleNumber(1) sampleNumber(end)]);
 
                 subplot(2,2,3);                                            % Create subplot
@@ -143,7 +132,7 @@ plotData = [];
                 legendName1 = [char(signalFormatArray(signalIndex1)) ' ' char(signalNameArray(signalIndex1)) ' (' char(signalUnitArray(signalIndex1)) ')'];
                 legendName2 = [char(signalFormatArray(signalIndex2)) ' ' char(signalNameArray(signalIndex2)) ' (' char(signalUnitArray(signalIndex2)) ')'];
                 legendName3 = [char(signalFormatArray(signalIndex3)) ' ' char(signalNameArray(signalIndex3)) ' (' char(signalUnitArray(signalIndex3)) ')'];
-                legend(legendName1,legendName2,legendName3); % Add legend to plot
+                legend(legendName1,legendName2,legendName3);               % Add legend to plot
                 xlim([sampleNumber(1) sampleNumber(end)]);
                 
              
@@ -155,7 +144,7 @@ plotData = [];
                 legendName1 = [char(signalFormatArray(signalIndex1)) ' ' char(signalNameArray(signalIndex1)) ' (' char(signalUnitArray(signalIndex1)) ')'];
                 legendName2 = [char(signalFormatArray(signalIndex2)) ' ' char(signalNameArray(signalIndex2)) ' (' char(signalUnitArray(signalIndex2)) ')'];
                 legendName3 = [char(signalFormatArray(signalIndex3)) ' ' char(signalNameArray(signalIndex3)) ' (' char(signalUnitArray(signalIndex3)) ')'];
-                legend(legendName1,legendName2,legendName3); % Add legend to plot
+                legend(legendName1,legendName2,legendName3);               % Add legend to plot
                 xlim([sampleNumber(1) sampleNumber(end)]);
             end
             
@@ -166,7 +155,12 @@ plotData = [];
         
         elapsedTime = elapsedTime + toc;                                   % Stop timer
         fprintf('The percentage of received packets: %d \n',getpercentageofpacketsreceived(51.2,timeStamp)); % Detect loss packets
-        shimmer.stop;                                                      % Stop data streaming                                                       % Stop data streaming             
-%%
+        obj.shimmer.stopStreaming();                                       % Stop data streaming                                                       % Stop data streaming             
+    
+    end
+    obj.shimmer.disconnect();
+    
+end
 
-shimmer.disconnectShimmer(comPort);
+        
+
