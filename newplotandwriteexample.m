@@ -16,32 +16,8 @@ numSamples = 0;
 [success, obj] = shimmer.connect();
 
 if success
-    
-    if (obj.shimmer.getHardwareVersion() == 10)
-        accelSensorId = 37;
-        magSensorId = 41;
-        GyroSensorId = 38;
-    else
-        accelSensorId = 2;
-        magSensorId = 32;
-        GyroSensorId = 30;
-    end
 
-    shimmerClone = obj.shimmer.deepClone();
-    shimmerClone.setSamplingRateShimmer(51.2);
-    shimmerClone.disableAllSensors()
-    shimmerClone.setEnabledAndDerivedSensorsAndUpdateMaps(0,0);
-    shimmerClone.setSensorEnabledState(accelSensorId, true);
-    shimmerClone.setSensorEnabledState(magSensorId, true);
-    shimmerClone.setSensorEnabledState(GyroSensorId, true);
-
-    commType = javaMethod('valueOf', 'com.shimmerresearch.driver.Configuration$COMMUNICATION_TYPE', 'BLUETOOTH');
-    com.shimmerresearch.driverUtilities.AssembleShimmerConfig.generateSingleShimmerConfig(shimmerClone, commType);
-    obj.shimmer.configureFromClone(shimmerClone);
-
-    btState = javaMethod('valueOf', 'com.shimmerresearch.bluetooth.ShimmerBluetooth$BT_STATE', 'CONFIGURING');
-    obj.shimmer.operationStart(btState);
-    pause(20);
+    shimmer.enabledsensors(51.2, {'LowNoiseAccel', 'Mag', 'Gyro'})
 
     if shimmer.start()
         plotData = [];                                               
@@ -155,7 +131,7 @@ if success
         end  
         
         elapsedTime = elapsedTime + toc;                                   % Stop timer
-        fprintf('The percentage of received packets: %d \n',getpercentageofpacketsreceived(51.2,timeStamp)); % Detect loss packets
+        fprintf('The percentage of received packets: %d \n',obj.shimmer.getPacketReceptionRateCurrent()); % Detect loss packets
         obj.shimmer.stopStreaming();                                       % Stop data streaming                                                       % Stop data streaming             
     
     end
