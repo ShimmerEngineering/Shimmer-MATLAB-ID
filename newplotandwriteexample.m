@@ -68,14 +68,19 @@ if success
             for i = 1:numel(signalNameArray)
                 signalNameCellArray{i} = char(signalNameArray(i));         % Convert each Java string to a MATLAB char array
             end
-       
-            if (firsttime==true && isempty(newData)~=1)
-                % firsttime = writeHeadersToFile(fileName,signalNameArray,signalFormatArray,signalUnitArray);
+            
+            signalFormatCellArray = cell(numel(signalFormatArray), 1);     
+            for i = 1:numel(signalFormatArray)
+                signalFormatCellArray{i} = char(signalFormatArray(i));     % Convert each Java string to a MATLAB char array
             end
-
-            if ~isempty(newData)                                           % TRUE if new data has arrived
-                
-                chIndex(1) = find(ismember(signalNameCellArray, 'Timestamp'));  % Get signal indices
+            
+            signalUnitCellArray = cell(numel(signalUnitArray), 1);     
+            for i = 1:numel(signalUnitArray)
+                signalUnitCellArray{i} = char(signalUnitArray(i));         % Convert each Java string to a MATLAB char array
+            end
+            
+            if(~isempty(signalNameCellArray))
+                chIndex(1) = find(ismember(signalNameCellArray, 'Timestamp')); % Get signal indices
                 chIndex(2) = find(ismember(signalNameCellArray, 'Accel_LN_X'));
                 chIndex(3) = find(ismember(signalNameCellArray, 'Accel_LN_Y'));
                 chIndex(4) = find(ismember(signalNameCellArray, 'Accel_LN_Z'));
@@ -85,6 +90,13 @@ if success
                 chIndex(8) = find(ismember(signalNameCellArray, 'Mag_X'));
                 chIndex(9) = find(ismember(signalNameCellArray, 'Mag_Y'));
                 chIndex(10) = find(ismember(signalNameCellArray, 'Mag_Z'));
+            end
+
+            if (firsttime==true && isempty(newData)~=1)
+                firsttime = newWriteHeadersToFile(fileName,signalNameCellArray(chIndex),signalFormatCellArray(chIndex),signalUnitCellArray(chIndex));
+            end
+
+            if ~isempty(newData)                                           % TRUE if new data has arrived
                 
                 filtredData = newData(:, chIndex);
                 
