@@ -10,35 +10,29 @@ NO_SAMPLES_IN_PLOT = 500;                                                  % Num
 DELAY_PERIOD = 0.2;                                                        % A delay period of time in seconds between data read operations
 numSamples = 0;
 
+addpath('./Resources/') 
+
 %%
 
 [success, obj] = shimmer.connect();
 
 if success
-    
-    if (obj.shimmer.getHardwareVersion() == 10)
-        pressureSensorId = 43;
-        pressureSensor = 'BMP390_Pressure';
-        temperatureSensor = 'BMP390_Temperature';
-    else
-        pressureSensorId = 36;
-        pressureSensor = 'Pressure_BMP180';
-        temperatureSensor = 'Temperature_BMP180';
-    end
 
     shimmerClone = obj.shimmer.deepClone();
     shimmerClone.setSamplingRateShimmer(51.2);
     shimmerClone.disableAllSensors()
     shimmerClone.setEnabledAndDerivedSensorsAndUpdateMaps(0,0);
-    shimmerClone.setSensorEnabledState(pressureSensorId, true);
+    
+    sensorIds = javaArray('java.lang.Integer', 1);
+    sensorIds(1) = java.lang.Integer(obj.sensorClass.SHIMMER_BMPX80_PRESSURE);
+
+    shimmerClone.setSensorIdsEnabled(sensorIds);
 
     commType = javaMethod('valueOf', 'com.shimmerresearch.driver.Configuration$COMMUNICATION_TYPE', 'BLUETOOTH');
     com.shimmerresearch.driverUtilities.AssembleShimmerConfig.generateSingleShimmerConfig(shimmerClone, commType);
     obj.shimmer.configureFromClone(shimmerClone);
 
-    btState = javaMethod('valueOf', 'com.shimmerresearch.bluetooth.ShimmerBluetooth$BT_STATE', 'CONFIGURING');
-    obj.shimmer.operationStart(btState);
-    pause(25);
+    pause(20);
 
     if shimmer.start()
         
@@ -66,15 +60,30 @@ if success
                 signalNameCellArray{i} = char(signalNameArray(i));         % Convert each Java string to a MATLAB char array
             end
             
+            signalFormatCellArray = cell(numel(signalFormatArray), 1);     
+            for i = 1:numel(signalFormatArray)
+                signalFormatCellArray{i} = char(signalFormatArray(i));     % Convert each Java string to a MATLAB char array
+            end
+            
+            signalUnitCellArray = cell(numel(signalUnitArray), 1);     
+            for i = 1:numel(signalUnitArray)
+                signalUnitCellArray{i} = char(signalUnitArray(i));         % Convert each Java string to a MATLAB char array
+            end
+            
+            if(~isempty(signalNameCellArray))
+                 chIndex(1) = find(ismember(signalNameCellArray, 'Pressure_BMP180'));   % get signal indices
+                 chIndex(2) = find(ismember(signalNameCellArray, 'Temperature_BMP180'));% get signal indices
+            end
             
             if (firsttime==true && isempty(newData)~=1)
-                %firsttime = writeHeadersToFile(fileName,signalNameArray,signalFormatArray,signalUnitArray);
+                firsttime = newWriteHeadersToFile(fileName,signalNameCellArray(chIndex),signalFormatCellArray(chIndex),signalUnitCellArray(chIndex));
             end
-
             
             if ~isempty(newData)                                           % TRUE if new data has arrived
                                 
-                dlmwrite(fileName, newData, '-append', 'delimiter', '\t'); % Append the new data to the file in a tab delimited format
+                filtredData = newData(:, chIndex);
+                
+                dlmwrite(fileName, double(filtredData), '-append', 'delimiter', '\t', 'precision', 16);
                             
                 plotData = [plotData; newData];                            % Update the plotDataBuffer with the new data
                 numPlotSamples = size(plotData,1);
@@ -82,17 +91,11 @@ if success
                 timeStampNew = newData(:,4);                               % get timestamps
                 timeStamp = [timeStamp; timeStampNew];
                 
-                 if numSamples > NO_SAMPLES_IN_PLOT
-                        plotData = plotData(numPlotSamples-NO_SAMPLES_IN_PLOT+1:end,:);
-                 end
-                 sampleNumber = max(numSamples-NO_SAMPLES_IN_PLOT+1,1):numSamples;
-                 
-               
-                 chIndex(1) = find(ismember(signalNameCellArray, pressureSensor));   % get signal indices
-                 chIndex(2) = find(ismember(signalNameCellArray, temperatureSensor));% get signal indices
+                if numSamples > NO_SAMPLES_IN_PLOT
+                    plotData = plotData(numPlotSamples-NO_SAMPLES_IN_PLOT+1:end,:);
+                end
+                sampleNumber = max(numSamples-NO_SAMPLES_IN_PLOT+1,1):numSamples;
 
-                             
-                 
                 set(0,'CurrentFigure',h.figure1);       
                 signalIndex = chIndex(1);
                 signalIndex2 = chIndex(2);
@@ -116,7 +119,7 @@ if success
         end  
         
         elapsedTime = elapsedTime + toc;                                   % Stop timer
-        fprintf('The percentage of received packets: %d \n',getpercentageofpacketsreceived(51.2,timeStamp)); % Detect loss packets
+        fprintf('The percentage of received packets: %d \n',obj.shimmer.getPacketReceptionRateCurrent()); % Detect loss packets
         obj.shimmer.stopStreaming();                                       % Stop data streaming                                                    
        
     end 
