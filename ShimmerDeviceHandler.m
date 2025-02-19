@@ -3,6 +3,7 @@ classdef ShimmerDeviceHandler
         obj
         shimmer
         comPort
+        sensorClass
     end
     
     methods
@@ -13,6 +14,7 @@ classdef ShimmerDeviceHandler
             javaaddpath('libs/vecmath-1.3.1.jar');
             javaaddpath('libs/commons-lang3-3.8.1.jar');
             
+            this.sensorClass = javaObjectEDT('com.shimmerresearch.driver.Configuration$Shimmer3$SENSOR_ID');
             this.comPort = comPort;
             this.obj = com.shimmerresearch.tools.matlab.ShimmerJavaClass();
         end
@@ -31,6 +33,7 @@ classdef ShimmerDeviceHandler
                 if ~isempty(this.shimmer)
                     disp(['Device connected... Elapsed time: ', num2str(toc(startTime)), ' seconds']);
                     success = true;
+                    pause(10);
                     return;
                 end
             end
