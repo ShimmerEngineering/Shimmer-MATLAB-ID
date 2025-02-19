@@ -11,6 +11,7 @@ shimmer = ShimmerDeviceHandler(comPort);                                     % D
     DELAY_PERIOD = 0.2;                                                        % Delay (in seconds) between data read operations
     numSamples = 0;
 
+    addpath('./Resources/')   
 %% settings
 
     % filtering settings
@@ -52,7 +53,22 @@ shimmer = ShimmerDeviceHandler(comPort);                                     % D
 
 if success
     
-    shimmer.enabledsensors(fs, {'ECG'}) 
+    shimmerClone = obj.shimmer.deepClone();
+    shimmerClone.setSamplingRateShimmer(fs);
+    
+    shimmerClone.disableAllSensors();                                      % Disables all currently enabled sensors
+    shimmerClone.setEnabledAndDerivedSensorsAndUpdateMaps(0, 0);           % Resets configuration on enabled and derived sensors
+    
+    sensorIds = javaArray('java.lang.Integer', 1);
+    sensorIds(1) = java.lang.Integer(obj.sensorClass.HOST_ECG);
+
+    shimmerClone.setSensorIdsEnabled(sensorIds);
+
+    commType = javaMethod('valueOf', 'com.shimmerresearch.driver.Configuration$COMMUNICATION_TYPE', 'BLUETOOTH');
+    com.shimmerresearch.driverUtilities.AssembleShimmerConfig.generateSingleShimmerConfig(shimmerClone, commType);
+    obj.shimmer.configureFromClone(shimmerClone);
+
+    pause(20);
     
     if shimmer.start()
 
@@ -82,17 +98,28 @@ if success
                     signalNameCellArray{i} = char(signalNameArray(i));     % Convert each Java string to a MATLAB char array
                 end
                 
-                
-                if (firsttime==true && isempty(newData)~=1)
-                    % firsttime = writeHeadersToFile(fileName,signalNameArray,signalFormatArray,signalUnitArray);
+                signalFormatCellArray = cell(numel(signalFormatArray), 1);     
+                for i = 1:numel(signalFormatArray)
+                    signalFormatCellArray{i} = char(signalFormatArray(i));     % Convert each Java string to a MATLAB char array
                 end
 
-                if ~isempty(newData)                                           % TRUE if new data has arrived
-                    
+                signalUnitCellArray = cell(numel(signalUnitArray), 1);     
+                for i = 1:numel(signalUnitArray)
+                    signalUnitCellArray{i} = char(signalUnitArray(i));         % Convert each Java string to a MATLAB char array
+                end
+                
+                if(~isempty(signalNameCellArray))
                     chIndex(1) = find(ismember(signalNameCellArray, 'ECG_LL-RA_24BIT'));
                     chIndex(2) = find(ismember(signalNameCellArray, 'ECG_LA-RA_24BIT'));
                     chIndex(3) = find(ismember(signalNameCellArray, 'ECG_Vx-RL_24BIT'));
                     chIndex(4) = find(ismember(signalNameCellArray, 'ECG_LL-LA_24BIT'));
+                end   
+                
+                if (firsttime==true && isempty(newData)~=1)
+                    firsttime = newWriteHeadersToFile(fileName,signalNameCellArray(chIndex),signalFormatCellArray(chIndex),signalUnitCellArray(chIndex));
+                end
+
+                if ~isempty(newData)                                           % TRUE if new data has arrived
                     
                     ECGData = newData(:,chIndex);
                     ECGDataFiltered = ECGData;
@@ -118,7 +145,7 @@ if success
                         ECGDataFiltered(:,4) = lpfexg2ch2.filterData(ECGDataFiltered(:,4));
                     end
                     
-                    dlmwrite(fileName, newData, '-append', 'delimiter', '\t','precision',16); % Append the new data to the file in a tab delimited format
+                    dlmwrite(fileName, double(ECGDataFiltered), '-append', 'delimiter', '\t','precision',16); % Append the new data to the file in a tab delimited format
 
                     plotData = [plotData; ECGData];                            % Update the plotData buffer with the new ECG data
                     filteredplotData = [filteredplotData; ECGDataFiltered];    % Update the filteredplotData buffer with the new filtered ECG data
