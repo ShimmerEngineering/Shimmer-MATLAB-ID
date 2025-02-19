@@ -27,25 +27,26 @@ PPG2HR = com.shimmerresearch.biophysicalprocessing.PPGtoHRAlgorithm(fs,numberOfB
 
 if success
     
-    if (PPGChannelNum == 13)
-        PPGChannel = 11;
-    elseif (PPGChannelNum == 12)
-        PPGChannel = 8;
-    end
-    
     shimmerClone = obj.shimmer.deepClone();
     shimmerClone.setSamplingRateShimmer(fs);
-    shimmerClone.disableAllSensors()
-    shimmerClone.setEnabledAndDerivedSensorsAndUpdateMaps(0,0);
-    shimmerClone.setSensorEnabledState(PPGChannel, true);
-    shimmerClone.setInternalExpPower(1);
+    
+    shimmerClone.disableAllSensors();                                      % Disables all currently enabled sensors
+    shimmerClone.setEnabledAndDerivedSensorsAndUpdateMaps(0, 0);           % Resets configuration on enabled and derived sensors
+    
+    sensorIds = javaArray('java.lang.Integer', 1);
+    
+    if PPGChannelNum == 13
+        sensorIds(1) = java.lang.Integer(obj.sensorClass.HOST_PPG_A13);
+    elseif PPGChannelNum == 12
+        sensorIds(1) = java.lang.Integer(obj.sensorClass.HOST_PPG_A12);
+    end
+    
+    shimmerClone.setSensorIdsEnabled(sensorIds);
 
     commType = javaMethod('valueOf', 'com.shimmerresearch.driver.Configuration$COMMUNICATION_TYPE', 'BLUETOOTH');
     com.shimmerresearch.driverUtilities.AssembleShimmerConfig.generateSingleShimmerConfig(shimmerClone, commType);
     obj.shimmer.configureFromClone(shimmerClone);
 
-    btState = javaMethod('valueOf', 'com.shimmerresearch.bluetooth.ShimmerBluetooth$BT_STATE', 'CONFIGURING');
-    obj.shimmer.operationStart(btState);
     pause(20);
     
     if shimmer.start()
@@ -153,7 +154,7 @@ if success
         end  
 
         elapsedTime = elapsedTime + toc;                                   % stop timer
-        fprintf('The percentage of received packets: %d \n',getpercentageofpacketsreceived(fs,timeStamp)); % Detect loss packets
+        fprintf('The percentage of received packets: %d \n',obj.shimmer.getPacketReceptionRateCurrent()); % Detect loss packets
         obj.shimmer.stopStreaming();                                           % stop data streaming          
         
     end
