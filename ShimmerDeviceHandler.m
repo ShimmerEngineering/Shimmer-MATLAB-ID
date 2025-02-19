@@ -48,5 +48,37 @@ classdef ShimmerDeviceHandler
             this.shimmer.startStreaming();
             success = true;
         end
+        
+        function quaternions = orientationModule(this, receivedData)
+            this.shimmer = this.obj.mBluetoothManager.getShimmerDeviceBtConnected(this.comPort);
+            if iscell(receivedData)
+                receivedData = receivedData{1};
+            end
+
+            receivedData = single(receivedData);
+
+            [N, M] = size(receivedData);
+            
+            acc = receivedData(:, 2:4); % Accelerometer (ax, ay, az)
+            gyr = receivedData(:, 5:7); % Gyroscope (gx, gy, gz)
+            mag = receivedData(:, 8:10); % Magnetometer (mx, my, mz)
+
+            sampleRate = this.shimmer.getSamplingRateShimmer();
+            orientationObj = javaObjectEDT('com.shimmerresearch.algorithms.orientation.GradDes3DOrientation', sampleRate);
+
+            quaternions = zeros(N, 4, 'single');
+
+            for i = 1:N
+                orientation3DObj = orientationObj.update(acc(i, 1), acc(i, 2), acc(i, 3), ...
+                                                         gyr(i, 1), gyr(i, 2), gyr(i, 3), ...
+                                                         mag(i, 1), mag(i, 2), mag(i, 3));
+                qw = orientation3DObj.getQuaternionW();
+                qx = orientation3DObj.getQuaternionX();
+                qy = orientation3DObj.getQuaternionY();
+                qz = orientation3DObj.getQuaternionZ();
+
+                quaternions(i, :) = [qw, qx, qy, qz];
+            end
+        end
     end
 end
