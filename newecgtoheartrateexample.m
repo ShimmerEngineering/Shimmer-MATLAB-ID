@@ -58,17 +58,20 @@ if success
 
     shimmerClone = obj.shimmer.deepClone();
     shimmerClone.setSamplingRateShimmer(fs);
-    shimmerClone.disableAllSensors();
-    shimmerClone.setEnabledAndDerivedSensorsAndUpdateMaps(0,0);
-    shimmerClone.setSensorEnabledState(100, true);
+    
+    shimmerClone.disableAllSensors();                                      % Disables all currently enabled sensors
+    shimmerClone.setEnabledAndDerivedSensorsAndUpdateMaps(0, 0);           % Resets configuration on enabled and derived sensors
+    
+    sensorIds = javaArray('java.lang.Integer', 1);
+    sensorIds(1) = java.lang.Integer(obj.sensorClass.HOST_ECG);
+
+    shimmerClone.setSensorIdsEnabled(sensorIds);
 
     commType = javaMethod('valueOf', 'com.shimmerresearch.driver.Configuration$COMMUNICATION_TYPE', 'BLUETOOTH');
     com.shimmerresearch.driverUtilities.AssembleShimmerConfig.generateSingleShimmerConfig(shimmerClone, commType);
     obj.shimmer.configureFromClone(shimmerClone);
 
-    btState = javaMethod('valueOf', 'com.shimmerresearch.bluetooth.ShimmerBluetooth$BT_STATE', 'CONFIGURING');
-    obj.shimmer.operationStart(btState);
-    pause(20);  
+    pause(20); 
     
     if shimmer.start()
         
@@ -98,8 +101,7 @@ if success
             for i = 1:numel(signalNameArray)
                 signalNameCellArray{i} = char(signalNameArray(i));         % Convert each Java string to a MATLAB char array
             end
-            
-            
+
             if (firsttime==true && isempty(newData)~=1) 
                 tab = char(9);
                 cal = 'CAL';
@@ -189,7 +191,7 @@ if success
         end  
         
         elapsedTime = elapsedTime + toc;                                   % stop timer
-        fprintf('The percentage of received packets: %d \n',getpercentageofpacketsreceived(fs,timeStamp)); % Detect loss packets
+        fprintf('The percentage of received packets: %d \n',obj.shimmer.getPacketReceptionRateCurrent()); % Detect loss packets
         obj.shimmer.stopStreaming();                                                      % stop data streaming                                                    
        
     end 
