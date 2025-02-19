@@ -1,23 +1,42 @@
 function void = newplotandwriteexample(comPort, captureDuration, fileName)
 %% definitions
 
-shimmer = ShimmerDeviceHandler(comPort);                                   % Define shimmer as a ShimmerHandle Class instance with comPort1
+shimmer = ShimmerDeviceHandler(comPort);                                   % Define shimmer as a ShimmerDevice Handler instance with comPort
 
 firsttime = true;
 
 % Note: these constants are only relevant to this examplescript and are not used
-% by the ShimmerHandle Class
+% by the ShimmerDevice Handler
 NO_SAMPLES_IN_PLOT = 500;                                                  % Number of samples that will be displayed in the plot at any one time
 DELAY_PERIOD = 0.2;                                                        % A delay period of time in seconds between data read operations
 numSamples = 0;
+
+addpath('./Resources/')                                                    % directory containing supporting functions
 
 %%
 
 [success, obj] = shimmer.connect();
 
 if success
+    
+    shimmerClone = obj.shimmer.deepClone();
+    shimmerClone.setSamplingRateShimmer(51.2);
+    
+    shimmerClone.disableAllSensors();                                      % Disables all currently enabled sensors
+    shimmerClone.setEnabledAndDerivedSensorsAndUpdateMaps(0, 0);           % Resets configuration on enabled and derived sensors
+    
+    sensorIds = javaArray('java.lang.Integer', 3);
+    sensorIds(1) = java.lang.Integer(obj.sensorClass.SHIMMER_ANALOG_ACCEL);
+    sensorIds(2) = java.lang.Integer(obj.sensorClass.SHIMMER_MPU9X50_GYRO);
+    sensorIds(3) = java.lang.Integer(obj.sensorClass.SHIMMER_LSM303_MAG);
 
-    shimmer.enabledsensors(51.2, {'LowNoiseAccel', 'Mag', 'Gyro'})
+    shimmerClone.setSensorIdsEnabled(sensorIds);
+
+    commType = javaMethod('valueOf', 'com.shimmerresearch.driver.Configuration$COMMUNICATION_TYPE', 'BLUETOOTH');
+    com.shimmerresearch.driverUtilities.AssembleShimmerConfig.generateSingleShimmerConfig(shimmerClone, commType);
+    obj.shimmer.configureFromClone(shimmerClone);
+
+    pause(20);
 
     if shimmer.start()
         plotData = [];                                               
@@ -43,35 +62,25 @@ if success
             newData = data(1);
             signalNameArray = data(2);
             signalFormatArray = data(3);
-            signalUnitArray = data(4);                        
-       
+            signalUnitArray = data(4);     
             
-            if (firsttime==true && isempty(newData)~=1)
-                % firsttime = writeHeadersToFile(fileName,signalNameArray,signalFormatArray,signalUnitArray);
+            signalNameCellArray = cell(numel(signalNameArray), 1);     
+            for i = 1:numel(signalNameArray)
+                signalNameCellArray{i} = char(signalNameArray(i));         % Convert each Java string to a MATLAB char array
             end
             
+            signalFormatCellArray = cell(numel(signalFormatArray), 1);     
+            for i = 1:numel(signalFormatArray)
+                signalFormatCellArray{i} = char(signalFormatArray(i));     % Convert each Java string to a MATLAB char array
+            end
             
-            if ~isempty(newData)                                           % TRUE if new data has arrived
-                
-                dlmwrite(fileName, newData, '-append', 'delimiter', '\t','precision',16); % Append the new data to the file in a tab delimited format
-                
-                plotData = [plotData; newData];                            % Update the plotDataBuffer with the new data
-                numPlotSamples = size(plotData,1);
-                numSamples = numSamples + size(newData,1);
-                timeStampNew = newData(:,11);                              % get timestamps
-                timeStamp = [timeStamp; timeStampNew];
-                
-                 if numSamples > NO_SAMPLES_IN_PLOT
-                        plotData = plotData(numPlotSamples-NO_SAMPLES_IN_PLOT+1:end,:);
-                 end
-                 sampleNumber = max(numSamples-NO_SAMPLES_IN_PLOT+1,1):numSamples;
-                 
-                signalNameCellArray = cell(numel(signalNameArray), 1);     
-                for i = 1:numel(signalNameArray)
-                    signalNameCellArray{i} = char(signalNameArray(i));     % Convert each Java string to a MATLAB char array
-                end
-               
-                chIndex(1) = find(ismember(signalNameCellArray, 'Timestamp'));  % Get signal indices
+            signalUnitCellArray = cell(numel(signalUnitArray), 1);     
+            for i = 1:numel(signalUnitArray)
+                signalUnitCellArray{i} = char(signalUnitArray(i));         % Convert each Java string to a MATLAB char array
+            end
+            
+            if(~isempty(signalNameCellArray))
+                chIndex(1) = find(ismember(signalNameCellArray, 'Timestamp')); % Get signal indices
                 chIndex(2) = find(ismember(signalNameCellArray, 'Accel_LN_X'));
                 chIndex(3) = find(ismember(signalNameCellArray, 'Accel_LN_Y'));
                 chIndex(4) = find(ismember(signalNameCellArray, 'Accel_LN_Z'));
@@ -81,8 +90,29 @@ if success
                 chIndex(8) = find(ismember(signalNameCellArray, 'Mag_X'));
                 chIndex(9) = find(ismember(signalNameCellArray, 'Mag_Y'));
                 chIndex(10) = find(ismember(signalNameCellArray, 'Mag_Z'));
-                              
-                 
+            end
+
+            if (firsttime==true && isempty(newData)~=1)
+                firsttime = newWriteHeadersToFile(fileName,signalNameCellArray(chIndex),signalFormatCellArray(chIndex),signalUnitCellArray(chIndex));
+            end
+
+            if ~isempty(newData)                                           % TRUE if new data has arrived
+                
+                filtredData = newData(:, chIndex);
+                
+                dlmwrite(fileName, double(filtredData), '-append', 'delimiter', '\t', 'precision', 16);
+                
+                plotData = [plotData; newData];                            % Update the plotDataBuffer with the new data
+                numPlotSamples = size(plotData,1);
+                numSamples = numSamples + size(newData,1);
+                timeStampNew = newData(:,11);                              % get timestamps
+                timeStamp = [timeStamp; timeStampNew];
+                
+                if numSamples > NO_SAMPLES_IN_PLOT
+                    plotData = plotData(numPlotSamples-NO_SAMPLES_IN_PLOT+1:end,:);
+                end
+                sampleNumber = max(numSamples-NO_SAMPLES_IN_PLOT+1,1):numSamples;
+
                 set(0,'CurrentFigure',h.figure1);           
                 subplot(2,2,1);                                            % Create subplot
                 signalIndex = chIndex(1);
@@ -112,7 +142,6 @@ if success
                 legend(legendName1,legendName2,legendName3);               % Add legend to plot
                 xlim([sampleNumber(1) sampleNumber(end)]);
                 
-             
                 subplot(2,2,4);                                            % Create subplot
                 signalIndex1 = chIndex(8);
                 signalIndex2 = chIndex(9);
