@@ -15,7 +15,7 @@ firsttime = true;
 [success, obj] = shimmer.connect();
 
 if success                                                                 % TRUE if the shimmer connects
-    
+     
     shimmerClone = obj.shimmer.deepClone();
     shimmerClone.setSamplingRateShimmer(51.2);
     
@@ -121,8 +121,10 @@ if success                                                                 % TRU
             if ~isempty(newData)                                                                          % TRUE if new data has arrived
                 
                 filtredData = newData(:, chIndex);
-                
-                quaternionData = shimmer.orientationModule(filtredData);
+                % using update existing update method
+                quaternionData = shimmer.orientationModule(filtredData,'9dof');
+                % using manually implemented magdwick filter
+                %quaternionData = shimmer.orientationModule2(filtredData); 
                 
                 updatedData = [filtredData quaternionData];
                 
@@ -229,7 +231,7 @@ end
 
         % Calculate camera position and angle for front view
         cameraPosition = quatrotate(quaternion,[0,0,0,1]);
-        if (shimmer.getshimmerversion~=3)
+        if (obj.shimmer.getHardwareVersion()~=3)
             cameraUpVector = quatrotate(quaternion,[0,1,0,0]);  % orientation for Shimmer2/2r 
         else
             cameraUpVector = quatrotate(quaternion,[0,-1,0,0]); % orientation for Shimmer3

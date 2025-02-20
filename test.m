@@ -6,7 +6,7 @@ newplotandwriteexample(comPort, captureDuration, fileName);
 %%
 
 comPort = 'COM3';
-captureDuration = 20;
+captureDuration = 30;
 fileName = 'DefaultTrial_Session1_Shimmer_96A9_Calibrated_PC_9DOF.dat';
 
 neworientation3Dexample(comPort, captureDuration, fileName);
