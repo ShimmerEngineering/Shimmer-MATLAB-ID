@@ -121,10 +121,7 @@ if success                                                                 % TRU
             if ~isempty(newData)                                                                          % TRUE if new data has arrived
                 
                 filtredData = newData(:, chIndex);
-                % using update existing update method
                 quaternionData = shimmer.orientationModule(filtredData,'9dof');
-                % using manually implemented magdwick filter
-                %quaternionData = shimmer.orientationModule2(filtredData); 
                 
                 updatedData = [filtredData quaternionData];
                 
