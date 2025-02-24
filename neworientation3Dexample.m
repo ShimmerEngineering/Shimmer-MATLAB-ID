@@ -1,8 +1,8 @@
 function neworientation3Dexample(comPort, captureDuration, fileName)
 
 newSignalName = {'Quat_Madge_9DOF_W', 'Quat_Madge_9DOF_X', 'Quat_Madge_9DOF_Y', 'Quat_Madge_9DOF_Z'};
-newSignalUnit = {'CAL', 'CAL', 'CAL', 'CAL'};
-newSignalFormat = {'no_units', 'no_units', 'no_units', 'no_units'};
+newSignalFormat = {'CAL', 'CAL', 'CAL', 'CAL'};
+newSignalUnit = {'no_units', 'no_units', 'no_units', 'no_units'};
 
 addpath('./quaternion/')                                                   % directory containing quaternion functions
 addpath('./Resources/')                                                    % directory containing supporting functions
@@ -114,8 +114,20 @@ if success                                                                 % TRU
             end
             
             if (firsttime==true && isempty(newData)~=1)
+               
+                % Adding new quaternion header to new file
+                newChIndex = chIndex;
                 
-                firsttime = newWriteHeadersToFile(fileName,signalNameCellArray(chIndex),signalFormatCellArray(chIndex),signalUnitCellArray(chIndex));
+                signalNameCellArray = [signalNameCellArray; newSignalName(:)];
+                signalFormatCellArray = [signalFormatCellArray; newSignalFormat(:)];
+                signalUnitCellArray = [signalUnitCellArray; newSignalUnit(:)];
+                
+                newChIndex(11) = find(ismember(signalNameCellArray, 'Quat_Madge_9DOF_W'));
+                newChIndex(12) = find(ismember(signalNameCellArray, 'Quat_Madge_9DOF_X'));
+                newChIndex(13) = find(ismember(signalNameCellArray, 'Quat_Madge_9DOF_Y'));
+                newChIndex(14) = find(ismember(signalNameCellArray, 'Quat_Madge_9DOF_Z'));
+                
+                firsttime = newWriteHeadersToFile(fileName,signalNameCellArray(newChIndex),signalFormatCellArray(newChIndex),signalUnitCellArray(newChIndex));
             end
             
             if ~isempty(newData)                                                                          % TRUE if new data has arrived
@@ -132,7 +144,7 @@ if success                                                                 % TRU
                 quaternionChannels(3) = 3;
                 quaternionChannels(4) = 4;
                 
-                quaternion = quaternionData(end, quaternionChannels);                                            % Only use the most recent quaternion sample for the graphic
+                quaternion = quaternionData(end, quaternionChannels);      % Only use the most recent quaternion sample for the graphic
                                 
                 shimmer3dRotated.p1 = quatrotate(quaternion, [0 shimmer3d.p1]);                           % Rotate the vertices
                 shimmer3dRotated.p2 = quatrotate(quaternion, [0 shimmer3d.p2]);
