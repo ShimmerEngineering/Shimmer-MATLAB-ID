@@ -18,7 +18,7 @@ classdef ShimmerDeviceHandler
             
             % this.sampleRate = this.shimmer.getSamplingRateShimmer();
             % relies on previous input / takes time to calibrated
-            this.orientationObj = javaObjectEDT('com.shimmerresearch.algorithms.orientation.GradDes3DOrientation', 51.2);
+            this.orientationObj = javaObjectEDT('com.shimmerresearch.algorithms.orientation.GradDes3DOrientation', 1/51.2);
 
             this.sensorClass = javaObjectEDT('com.shimmerresearch.driver.Configuration$Shimmer3$SENSOR_ID');
             this.comPort = comPort;
