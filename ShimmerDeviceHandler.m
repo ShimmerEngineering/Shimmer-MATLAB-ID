@@ -106,6 +106,27 @@ classdef ShimmerDeviceHandler
                 end
             end
         end
+        
+        function checkDeviceConnection(this, newData)
+            persistent dataPreviouslyReceived warningDisplayed
+
+            if isempty(dataPreviouslyReceived)
+                dataPreviouslyReceived = false;
+            end
+            if isempty(warningDisplayed)
+                warningDisplayed = false;
+            end
+
+            if isempty(newData)
+                if dataPreviouslyReceived && ~warningDisplayed
+                    uiwait(msgbox('Device disconnected.', 'Warning', 'warn'));
+                    warningDisplayed = true;
+                end
+            else
+                dataPreviouslyReceived = true;
+                warningDisplayed = false;
+            end
+        end
     end
 end
         

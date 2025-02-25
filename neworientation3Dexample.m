@@ -80,7 +80,10 @@ if success                                                                 % TRU
             pause(DELAY_PERIOD);                                           % Pause for this period of time on each iteration to allow data to arrive in the buffer
             
             data = obj.obj.receiveData();                                  % Read the latest data from shimmer data buffer, signalFormatArray defines the format of the data and signalUnitArray the unit
+            
             newData = data(1);
+            shimmer.checkDeviceConnection(newData);
+            
             signalNameArray = data(2);
             signalFormatArray = data(3);
             signalUnitArray = data(4);
