@@ -1,4 +1,24 @@
 function void = newplotandwritepressureandtemperatureexample(comPort, captureDuration, fileName)
+%NEWPLOTANDWRITEPRESSUREANDTEMPERATUREEXAMPLE - Plotting pressure and temperature data and write to file
+%
+%  newplotandwritepressureandtemperatureexample(COMPORT, CAPTUREDURATION, FILENAME) 
+%
+%  SYNOPSIS: newplotandwritepressureandtemperatureexample(comPort, captureDuration,
+%  fileName)
+%
+%  INPUT: comPort - String value defining the COM port number for Shimmer
+%
+%  INPUT: captureDuration - Numerical value defining the period of time
+%                           (in seconds) for which the function will stream
+%                           data from  the Shimmers.
+%  INPUT : fileName - String value defining the name of the file that data
+%                     is written to in a comma delimited format.
+%  OUTPUT: none
+%
+%  EXAMPLE: newplotandwritepressureandtemperatureexample('7', 30, 'testdata.dat')
+%
+%  See also newplotandwriteexample ShimmerDeviceHandler
+
 %% definitions
 
 shimmer = ShimmerDeviceHandler(comPort);                                   % Define shimmer as a ShimmerHandle Class instance with comPort1
