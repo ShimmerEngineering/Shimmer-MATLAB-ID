@@ -1,4 +1,45 @@
-function void = newppgtoheartrateexample(comPort, PPGChannelNum, captureDuration, fileName) 
+function void = newppgtoheartrateexample(comPort, captureDuration, fileName) 
+%NEWPPGTOHEARTRATEEXAMPLE - Heart Rate from Photo Plethysmograph signal
+%
+%  NEWPPGTOHEARTRATEEXAMPLE(COMPORT, CAPTUREDURATION, FILENAME)
+%  plots Photo Plethysmograph and estimated Heart Rate from the Shimmer
+%  paired with COMPORT. The function will stream data for a fixed duration
+%  of time defined by the constant CAPTUREDURATION. The function also
+%  writes the data in a tab delimited format to the file defined in
+%  FILENAME.
+%
+%  SYNOPSIS: newppgtoheartrateexample(comPort, captureDuration,
+%  fileName)
+%
+%  INPUT: comPort - String value defining the COM port number for Shimmer
+%
+%  INPUT: captureDuration - Numerical value defining the period of time
+%                           (in seconds) for which the function will stream
+%                           data from  the Shimmers.
+%  INPUT : fileName - String value defining the name of the file that data
+%                     is written to in a comma delimited format.
+%  OUTPUT: none
+%
+%  EXAMPLE: newppgtoheartrateexample('7', 30, 'testdata.dat')
+%
+%  See also newplotandwriteexample ShimmerDeviceHandler
+%
+% NOTE: To use the Java Shimmer Biophysical Processing Library in   
+% conjunction with the MATLAB ID:
+% Save the ShimmerBiophysicalProcessingLibrary_Rev_X_Y.jar file to
+% C:\Program\Files\MATLAB\R2013b\java\jar (or the equivalent) on your PC and
+% add the location of the ShimmerBiophysicalProcessingLibrary_Rev_X_Y.jar file
+% to the JAVA dynamic class path:
+%
+% javaclasspath('C:\Program
+% Files\MATLAB\R2013b\java\jar\ShimmerBiophysicalProcessingLibrary_Rev_X_Y.jar')
+%
+% NOTE: In this example the PPG data is pre-filtered using a second order
+% Chebyshev LPF with corner freq 5Hz by using FilterClass.m
+% 
+% NOTE: If heartRate < 30 or heartRate > 215 or standard deviation of last
+% X interbeat intervals > 100 (X = numberOfBeatsToAve) then -1 is returned.
+
 %% definitions
 shimmer = ShimmerDeviceHandler(comPort);                                   % Define shimmer as a ShimmerHandle Class instance with comPort1
 
@@ -34,12 +75,7 @@ if success
     shimmerClone.setEnabledAndDerivedSensorsAndUpdateMaps(0, 0);           % Resets configuration on enabled and derived sensors
     
     sensorIds = javaArray('java.lang.Integer', 1);
-    
-    if PPGChannelNum == 13
-        sensorIds(1) = java.lang.Integer(obj.sensorClass.HOST_PPG_A13);
-    elseif PPGChannelNum == 12
-        sensorIds(1) = java.lang.Integer(obj.sensorClass.HOST_PPG_A12);
-    end
+    sensorIds(1) = java.lang.Integer(obj.sensorClass.HOST_PPG_A13);
     
     shimmerClone.setSensorIdsEnabled(sensorIds);
 
@@ -66,7 +102,7 @@ if success
 
             pause(DELAY_PERIOD);                                           % pause for this period of time on each iteration to allow data to arrive in the buffer
 
-            data = obj.obj.receiveData();                                      % Read the latest data from shimmer data buffer, signalFormatArray defines the format of the data and signalUnitArray the unit
+            data = obj.obj.receiveData();                                  % Read the latest data from shimmer data buffer, signalFormatArray defines the format of the data and signalUnitArray the unit
             newData = data(1);
             signalNameArray = data(2);
 
@@ -96,7 +132,7 @@ if success
 
                 % get signal indices
                 chIndex(1) = find(ismember(signalNameCellArray, 'Timestamp'));
-                chIndex(2) = find(ismember(signalNameCellArray, ['PPG_A' num2str(PPGChannelNum)]));   % PPG data output             
+                chIndex(2) = find(ismember(signalNameCellArray, ['PPG_A13']));   % PPG data output             
                 PPGData = newData(:,chIndex(2));
                 PPGDataFiltered = PPGData;
                 PPGDataFiltered = lpfPPG.filterData(PPGDataFiltered);      % filter with low pass filter   
@@ -155,7 +191,7 @@ if success
 
         elapsedTime = elapsedTime + toc;                                   % stop timer
         fprintf('The percentage of received packets: %d \n',obj.shimmer.getPacketReceptionRateCurrent()); % Detect loss packets
-        obj.shimmer.stopStreaming();                                           % stop data streaming          
+        obj.shimmer.stopStreaming();                                       % stop data streaming          
         
     end
     obj.shimmer.disconnect();
