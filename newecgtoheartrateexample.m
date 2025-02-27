@@ -1,4 +1,41 @@
 function void = newecgtoheartrateexample(comPort, captureDuration, fileName)
+%NEWECGTOHEARTRATEEXAMPLE - Heart Rate from electrocardiogram signal
+%
+%  NEWECGTOHEARTRATEEXAMPLE(COMPORT, CAPTUREDURATION, FILENAME)
+%  plots ECG and estimated Heart Rate from the Shimmer
+%  paired with COMPORT. The function will stream data for a fixed duration
+%  of time defined by the constant CAPTUREDURATION. The function also
+%  writes the data in a tab delimited format to the file defined in
+%  FILENAME.
+%
+%  SYNOPSIS: newecgtoheartrateexample(comPort, captureDuration, fileName)
+%
+%  INPUT: comPort - String value defining the COM port number for Shimmer
+%
+%  INPUT: captureDuration - Numerical value defining the period of time
+%                           (in seconds) for which the function will stream
+%                           data from  the Shimmers.
+%  INPUT : fileName - String value defining the name of the file that data
+%                     is written to in a comma delimited format.
+%  OUTPUT: none
+%
+%  EXAMPLE: newecgtoheartrateexample('COM5', 30, 'testdata.dat')
+%
+%  See also plotandwriteexample ShimmerDeviceHandler
+%  newppgtoheartrateexample
+%
+% NOTE: To use the Java Shimmer Biophysical Processing Library in   
+% conjunction with the MATLAB ID:
+% Save the ShimmerBiophysicalProcessingLibrary_Rev_X_Y.jar  file to
+% C:\Program\Files\MATLAB\R2013b\java\jar (or the equivalent) on your PC and
+% add the location of the ShimmerBiophysicalProcessingLibrary_Rev_X_Y.jar file
+% to the JAVA dynamic class path:
+%
+% javaclasspath('C:\Program Files\MATLAB\R2013b\java\jar\ShimmerBiophysicalProcessingLibrary_Rev_X_Y.jar')
+%
+% NOTE: In this example the ECG data is pre-filtered using a second order
+% Chebyshev HPF with corner freq 0.5Hz by using FilterClass.m
+
 %% definitions
 shimmer = ShimmerDeviceHandler(comPort);                                     % Define shimmer as a ShimmerHandle Class instance with comPort1
 SensorMacros = SetEnabledSensorsMacrosClass;                               % assign user friendly macros for setenabledsensors
