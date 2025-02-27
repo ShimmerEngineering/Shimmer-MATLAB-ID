@@ -1,20 +1,36 @@
 function void = newplotandwriteemgexample(comPort, captureDuration, fileName)
-%% definitions
-shimmer = ShimmerDeviceHandler(comPort);                                     % Define shimmer as a ShimmerHandle Class instance with comPort1
+    %NEWPLOTANDWRITEEMGEXAMPLE - Plotting emg signal and write to file
+    %  SYNOPSIS: newplotandwriteemgexample(comPort, captureDuration,
+    %  fileName)
+    %
+    %  INPUT: comPort  - String value defining the COM port number for Shimmer
+    %   
+    %  INPUT: captureDuration  - Numerical value defining the capture duration
+    %
+    %  INPUT: fileName - String value defining the name of the data file
+    %
+    %  OUTPUT: shimmer  - Object of the ShimmerHandleClass
+    %
+	%  EXAMPLE: newplotandwriteemgexample('COM5', 30, 'testdata.dat')
+    %
+    %  See also newplotandwriteexample ShimmerDeviceHandler
+    
+    %% definitions
+    shimmer = ShimmerDeviceHandler(comPort);                               % Define shimmer as a ShimmerHandle Class instance with comPort1
 
-fs = 512;                                                                  % sample rate in [Hz]     
+    fs = 512;                                                              % sample rate in [Hz]     
 
-firsttime = true;
+    firsttime = true;
 
-% Note: these constants are only relevant to this examplescript and are not used
-% by the ShimmerHandle Class
-NO_SAMPLES_IN_PLOT = 5000;                                                 % Number of samples in the plot 
-DELAY_PERIOD = 0.2;                                                        % Delay (in seconds) between data read operations
-numSamples = 0;
+    % Note: these constants are only relevant to this examplescript and are not used
+    % by the ShimmerHandle Class
+    NO_SAMPLES_IN_PLOT = 5000;                                             % Number of samples in the plot 
+    DELAY_PERIOD = 0.2;                                                    % Delay (in seconds) between data read operations
+    numSamples = 0;
 
-addpath('./Resources/')                                                    % directory containing supporting functions
+    addpath('./Resources/')                                                % directory containing supporting functions
 
-%% settings
+    %% settings
 
     % filtering settings
     fm = 50;                                                                   % mains frequency [Hz]
@@ -49,7 +65,7 @@ addpath('./Resources/')                                                    % dir
 
 if success
     
-shimmerClone = obj.shimmer.deepClone();
+    shimmerClone = obj.shimmer.deepClone();
     shimmerClone.setSamplingRateShimmer(51.2);
     
     shimmerClone.disableAllSensors();                                      % Disables all currently enabled sensors
