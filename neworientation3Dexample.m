@@ -1,4 +1,31 @@
 function neworientation3Dexample(comPort, captureDuration, fileName)
+%NEWORIENTATION3DEXAMPLE - Demonstrate 3D orientation visualation and write to file
+%
+%  NEWORIENTATION3DEXAMPLE(COMPORT, CAPTUREDURATION, FILENAME) streams 3
+%  accelerometer signals, 3 gyroscope signals and 3 magnetometer signals,
+%  from the Shimmer paired with COMPORT, estimates the 3D orientation in
+%  quaternion format and displays a 3D graphic to visualise the
+%  orientation. The "Set" and "Reset" buttons on the graph display can be
+%  used to change the viewpoint of the graph so that the visualisation of
+%  the device matches the viewpoint of the user, relative to the physical
+%  device. The function
+%  will stream data for a fixed duration of time defined by the constant
+%  CAPTUREDURATION. The function also writes the data in a tab delimited
+%  format to the file defined in FILENAME.
+%
+%  SYNOPSIS: neworientation3Dexample(comPort, captureDuration, fileName)
+%
+%  INPUT: comPort - String value defining the COM port number for Shimmer
+%  INPUT: captureDuration - Numerical value defining the period of time
+%                           (in seconds) for which the function will stream
+%                           data from  the Shimmers.
+%  INPUT : fileName - String value defining the name of the file that data
+%                     is written to in a comma delimited format.
+%  OUTPUT: none
+%
+%  EXAMPLE: neworientation3Dexample('COM3', 30, 'testdata.dat')
+%
+%  See also newplotandwriteexample ShimmerDeviceHandler
 
 newSignalName = {'Quat_Madge_9DOF_W', 'Quat_Madge_9DOF_X', 'Quat_Madge_9DOF_Y', 'Quat_Madge_9DOF_Z'};
 newSignalFormat = {'CAL', 'CAL', 'CAL', 'CAL'};
