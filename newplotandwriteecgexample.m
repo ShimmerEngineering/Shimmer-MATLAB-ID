@@ -1,4 +1,19 @@
 function shimmer = newplotandwriteecgexample(comPort, captureDuration, fileName)
+%NEWPLOTANDWRITEECGEXAMPLE - Plotting ecg signal and write to file
+%  INPUT: comPort  - String value defining the COM port number for Shimmer
+%   
+%  INPUT: captureDuration  - Numerical value defining the capture duration
+%
+%  INPUT: fileName - String value defining the name of the data file
+%
+%  OUTPUT: shimmer  - Object of the ShimmerDeviceHandler
+%
+%  EXAMPLE: newplotandwriteecgexample('COM5', 30, 'testdata.dat')
+%
+%  See also newplotandwriteexample ShimmerDeviceHandler
+%
+% Example for Shimmer3
+ 
 %% definitions
 shimmer = ShimmerDeviceHandler(comPort);                                     % Define shimmer as a ShimmerHandle Class instance with comPort1
 
