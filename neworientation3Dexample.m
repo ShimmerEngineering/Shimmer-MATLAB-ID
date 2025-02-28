@@ -109,7 +109,7 @@ if success                                                                 % TRU
             data = obj.obj.receiveData();                                  % Read the latest data from shimmer data buffer, signalFormatArray defines the format of the data and signalUnitArray the unit
             
             newData = data(1);
-            shimmer.checkDeviceConnection(newData);
+            %shimmer.checkDeviceConnection(newData);
             
             signalNameArray = data(2);
             signalFormatArray = data(3);
