@@ -1,6 +1,6 @@
 Configuring Java Class Path for Older MATLAB Versions
 
-This project requires the use of specific versions of the Apache Commons Math library:
+This project requires the use of specific versions of the Apache Commons Math library in the same directory as MATLAB script:
 
 - libs/commons-math-2.2.jar
 
