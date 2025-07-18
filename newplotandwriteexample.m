@@ -39,7 +39,8 @@ addpath('./Resources/')                                                    % dir
 %%
 
 [success, obj] = shimmer.connect();
-
+% Ensure disconnection happens properly even if the workspace is cleared or the script is interrupted
+cleaner = onCleanup(@() obj.shimmer.disconnect());  % Ensure disconnection on cleanup
 if success
     
     shimmerClone = obj.shimmer.deepClone();
@@ -191,5 +192,5 @@ if success
     
 end
 
-        
-
+       
+end
