@@ -1,14 +1,14 @@
-function void = newplotandwriteexample(comPort, captureDuration, fileName)
-%NEWPLOTANDWRITEEXAMPLE - Demonstrate basic features of ShimmerHandleClass
+function void = plotandwriteexample(comPort, captureDuration, fileName)
+%PLOTANDWRITEEXAMPLE - Demonstrate basic features of ShimmerHandleClass
 %
-%  NEWPLOTANDWRITEEXAMPLE(COMPORT, CAPTUREDURATION, FILENAME) plots 3 
+%  PLOTANDWRITEEXAMPLE(COMPORT, CAPTUREDURATION, FILENAME) plots 3 
 %  accelerometer signals, 3 gyroscope signals and 3 magnetometer signals,
 %  from the Shimmer paired with COMPORT. The function 
 %  will stream data for a fixed duration of time defined by the constant 
 %  CAPTUREDURATION. The function also writes the data in a tab ddelimited 
 %  format to the file defined in FILENAME.
 %
-%  SYNOPSIS: newplotandwriteexample(comPort, captureDuration, fileName)
+%  SYNOPSIS: plotandwriteexample(comPort, captureDuration, fileName)
 %
 %  INPUT: comPort - String value defining the COM port number for Shimmer
 %  INPUT: captureDuration - Numerical value defining the period of time 
@@ -18,7 +18,7 @@ function void = newplotandwriteexample(comPort, captureDuration, fileName)
 %                     is written to in a comma delimited format.
 %  OUTPUT: none
 %
-%  EXAMPLE: newplotandwriteexample('COM3', 30, 'testdata.dat')
+%  EXAMPLE: plotandwriteexample('COM3', 30, 'testdata.dat')
 %
 %  See also ShimmerDeviceHandler
 

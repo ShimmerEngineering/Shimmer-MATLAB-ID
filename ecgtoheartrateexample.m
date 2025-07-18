@@ -1,14 +1,14 @@
-function void = newecgtoheartrateexample(comPort, captureDuration, fileName)
-%NEWECGTOHEARTRATEEXAMPLE - Heart Rate from electrocardiogram signal
+function void = ecgtoheartrateexample(comPort, captureDuration, fileName)
+%ECGTOHEARTRATEEXAMPLE - Heart Rate from electrocardiogram signal
 %
-%  NEWECGTOHEARTRATEEXAMPLE(COMPORT, CAPTUREDURATION, FILENAME)
+%  ECGTOHEARTRATEEXAMPLE(COMPORT, CAPTUREDURATION, FILENAME)
 %  plots ECG and estimated Heart Rate from the Shimmer
 %  paired with COMPORT. The function will stream data for a fixed duration
 %  of time defined by the constant CAPTUREDURATION. The function also
 %  writes the data in a tab delimited format to the file defined in
 %  FILENAME.
 %
-%  SYNOPSIS: newecgtoheartrateexample(comPort, captureDuration, fileName)
+%  SYNOPSIS: ecgtoheartrateexample(comPort, captureDuration, fileName)
 %
 %  INPUT: comPort - String value defining the COM port number for Shimmer
 %
@@ -19,10 +19,10 @@ function void = newecgtoheartrateexample(comPort, captureDuration, fileName)
 %                     is written to in a comma delimited format.
 %  OUTPUT: none
 %
-%  EXAMPLE: newecgtoheartrateexample('COM5', 30, 'testdata.dat')
+%  EXAMPLE: ecgtoheartrateexample('COM5', 30, 'testdata.dat')
 %
 %  See also plotandwriteexample ShimmerDeviceHandler
-%  newppgtoheartrateexample
+%  ppgtoheartrateexample
 %
 % NOTE: To use the Java Shimmer Biophysical Processing Library in   
 % conjunction with the MATLAB ID:
