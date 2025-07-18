@@ -10,12 +10,37 @@ classdef ShimmerDeviceHandler
     
     methods
         function this = ShimmerDeviceHandler(comPort)
-            javaaddpath('ShimmerBiophysicalProcessingLibrary_Rev_0_10.jar');
-            javaaddpath('libs/ShimmerJavaClass.jar');
-            javaaddpath('libs/jssc-2.9.6.jar');
-            javaaddpath('libs/vecmath-1.3.1.jar');
-            javaaddpath('libs/commons-lang3-3.8.1.jar');
+            % List of JARs you want to add
+            jarsToAdd = {
+                'ShimmerBiophysicalProcessingLibrary_Rev_0_10.jar'
+                'libs/ShimmerJavaClass.jar'
+                'libs/jssc-2.9.6.jar'
+                'libs/vecmath-1.3.1.jar'
+                'libs/commons-lang3-3.8.1.jar'
+            };
             
+            % Get current dynamic classpath
+            currentClasspath = javaclasspath('-dynamic');
+            
+            for i = 1:numel(jarsToAdd)
+                jarPath = jarsToAdd{i};
+                fullJarPath = fullfile(pwd, jarPath);  % Resolve relative to current directory
+            
+                % Check if the jar is already in classpath (case-insensitive)
+                isInClasspath = any(strcmpi(currentClasspath, fullJarPath));
+            
+                if ~isInClasspath
+                    try
+                        javaaddpath(fullJarPath);
+                        fprintf('Added to classpath: %s\n', fullJarPath);
+                    catch ME
+                        fprintf('Failed to add %s: %s\n', fullJarPath, ME.message);
+                    end
+                else
+                    fprintf('Already in classpath: %s\n', fullJarPath);
+                end
+            end
+
             % this.sampleRate = this.shimmer.getSamplingRateShimmer();
             % relies on previous input / takes time to calibrated
             this.orientationObj = javaObjectEDT('com.shimmerresearch.algorithms.orientation.GradDes3DOrientation', 1/51.2);

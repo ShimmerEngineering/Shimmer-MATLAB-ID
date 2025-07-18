@@ -40,7 +40,8 @@ DELAY_PERIOD = 0.2;
 firsttime = true;
 
 [success, obj] = shimmer.connect();
-
+% Ensure disconnection happens properly even if the workspace is cleared or the script is interrupted
+cleaner = onCleanup(@() obj.shimmer.disconnect());  % Ensure disconnection on cleanup
 if success                                                                 % TRUE if the shimmer connects
      
     shimmerClone = obj.shimmer.deepClone();
