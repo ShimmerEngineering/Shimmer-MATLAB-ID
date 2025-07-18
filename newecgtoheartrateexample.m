@@ -38,7 +38,6 @@ function void = newecgtoheartrateexample(comPort, captureDuration, fileName)
 
 %% definitions
 shimmer = ShimmerDeviceHandler(comPort);                                     % Define shimmer as a ShimmerHandle Class instance with comPort1
-SensorMacros = SetEnabledSensorsMacrosClass;                               % assign user friendly macros for setenabledsensors
 
 fs = 512;                                                                  % sample rate in [Hz]     
 
@@ -90,7 +89,8 @@ ECG2HR = com.shimmerresearch.biophysicalprocessing.ECGtoHRAdaptive(fs);  % creat
 %%
 
 [success, obj] = shimmer.connect();
-
+% Ensure disconnection happens properly even if the workspace is cleared or the script is interrupted
+cleaner = onCleanup(@() obj.shimmer.disconnect());  % Ensure disconnection on cleanup
 if success
 
     shimmerClone = obj.shimmer.deepClone();
@@ -103,7 +103,7 @@ if success
     sensorIds(1) = java.lang.Integer(obj.sensorClass.HOST_ECG);
 
     shimmerClone.setSensorIdsEnabled(sensorIds);
-
+    shimmerClone.setConfigValueUsingConfigLabel(java.lang.Integer(obj.sensorClass.HOST_ECG),'Resolution',java.lang.Integer(1));  
     commType = javaMethod('valueOf', 'com.shimmerresearch.driver.Configuration$COMMUNICATION_TYPE', 'BLUETOOTH');
     com.shimmerresearch.driverUtilities.AssembleShimmerConfig.generateSingleShimmerConfig(shimmerClone, commType);
     obj.shimmer.configureFromClone(shimmerClone);
