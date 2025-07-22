@@ -34,36 +34,36 @@ newSignalUnit = {'no_units', 'no_units', 'no_units', 'no_units'};
 addpath('./quaternion/')                                                   % directory containing quaternion functions
 addpath('./Resources/')                                                    % directory containing supporting functions
 
-shimmer = ShimmerDeviceHandler(comPort);                                   % Define shimmer as a ShimmerDevice Handler instance with comPort
+deviceHandler = ShimmerDeviceHandler();                                   % Define a handler 
 
 DELAY_PERIOD = 0.2; 
 firsttime = true;
 
-[success, obj] = shimmer.connect();
+deviceHandler.bluetoothManager.connectShimmerThroughCommPort(comPort);
+cleaner = onCleanup(@() deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).disconnect());  % Ensure disconnection on cleanup
+pause(10);
 % Ensure disconnection happens properly even if the workspace is cleared or the script is interrupted
-cleaner = onCleanup(@() obj.shimmer.disconnect());  % Ensure disconnection on cleanup
-if success                                                                 % TRUE if the shimmer connects
-     
-    shimmerClone = obj.shimmer.deepClone();
+if deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).isConnected()
+    shimmerClone = deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).deepClone();
     shimmerClone.setSamplingRateShimmer(51.2);
     
     shimmerClone.disableAllSensors();                                      % Disables all currently enabled sensors
     shimmerClone.setEnabledAndDerivedSensorsAndUpdateMaps(0, 0);           % Resets configuration on enabled and derived sensors
     
     sensorIds = javaArray('java.lang.Integer', 3);
-    sensorIds(1) = java.lang.Integer(obj.sensorClass.SHIMMER_ANALOG_ACCEL);
-    sensorIds(2) = java.lang.Integer(obj.sensorClass.SHIMMER_MPU9X50_GYRO);
-    sensorIds(3) = java.lang.Integer(obj.sensorClass.SHIMMER_LSM303_MAG);
+    sensorIds(1) = java.lang.Integer(deviceHandler.sensorClass.SHIMMER_ANALOG_ACCEL);
+    sensorIds(2) = java.lang.Integer(deviceHandler.sensorClass.SHIMMER_MPU9X50_GYRO);
+    sensorIds(3) = java.lang.Integer(deviceHandler.sensorClass.SHIMMER_LSM303_MAG);
 
     shimmerClone.setSensorIdsEnabled(sensorIds);
 
     commType = javaMethod('valueOf', 'com.shimmerresearch.driver.Configuration$COMMUNICATION_TYPE', 'BLUETOOTH');
     com.shimmerresearch.driverUtilities.AssembleShimmerConfig.generateSingleShimmerConfig(shimmerClone, commType);
-    obj.shimmer.configureFromClone(shimmerClone);
+    deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).configureFromClone(shimmerClone);
 
     pause(20);
     
-    if shimmer.start()                                                     % TRUE if the shimmer starts streaming
+    deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).startStreaming()
         
         % initial viewpoint for 3D visualisation
         cameraUpVector = [0,1,0,0];
@@ -107,7 +107,7 @@ if success                                                                 % TRU
             
             pause(DELAY_PERIOD);                                           % Pause for this period of time on each iteration to allow data to arrive in the buffer
             
-            data = obj.obj.receiveData(comPort);                                  % Read the latest data from shimmer data buffer, signalFormatArray defines the format of the data and signalUnitArray the unit
+            data = deviceHandler.obj.receiveData(comPort);                                  % Read the latest data from shimmer data buffer, signalFormatArray defines the format of the data and signalUnitArray the unit
             if (isempty(data))
                 continue;
             end
@@ -166,7 +166,7 @@ if success                                                                 % TRU
             if ~isempty(newData)                                                                          % TRUE if new data has arrived
                 
                 filtredData = newData(:, chIndex);
-                quaternionData = shimmer.orientationModule(filtredData,'9dof');
+                quaternionData = deviceHandler.orientationModule(filtredData,'9dof');
                 
                 updatedData = [filtredData quaternionData];
                 
@@ -260,20 +260,20 @@ if success                                                                 % TRU
         end
         
         elapsedTime = elapsedTime + toc;                                                                  % Stop timer
-        fprintf('The percentage of received packets: %d \n',obj.shimmer.getPacketReceptionRateCurrent()); % Detect lost packets
-        obj.shimmer.stopStreaming();                                                                                     % Stop data streaming
-        
-    end
-    obj.shimmer.disconnect;                                                                                   % Disconnect from shimmer
+        fprintf('The percentage of received packets: %d \n',deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).getPacketReceptionRateCurrent()); % Detect lost packets
+        deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).stopStreaming();     
+        % Stop data streaming
+        deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).disconnect;     
+    end 
     
-end
+
 
     function setaxes(hObj,event) 
         % Called when user presses "Set" button  
 
         % Calculate camera position and angle for front view
         cameraPosition = quatrotate(quaternion,[0,0,0,1]);
-        if (obj.shimmer.getHardwareVersion()~=3)
+        if (deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).getHardwareVersion()~=3)
             cameraUpVector = quatrotate(quaternion,[0,1,0,0]);  % orientation for Shimmer2/2r 
         else
             cameraUpVector = quatrotate(quaternion,[0,-1,0,0]); % orientation for Shimmer3

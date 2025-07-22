@@ -1,15 +1,13 @@
 classdef ShimmerDeviceHandler
     properties
         obj
-        shimmer
-        comPort
+        bluetoothManager
         sensorClass
-        sampleRate
         orientationObj
     end
     
     methods
-        function this = ShimmerDeviceHandler(comPort)
+        function this = ShimmerDeviceHandler()
             % List of JARs you want to add
             jarsToAdd = {
                 'ShimmerBiophysicalProcessingLibrary_Rev_0_10.jar'
@@ -46,42 +44,11 @@ classdef ShimmerDeviceHandler
             this.orientationObj = javaObjectEDT('com.shimmerresearch.algorithms.orientation.GradDes3DOrientation', 1/51.2);
 
             this.sensorClass = javaObjectEDT('com.shimmerresearch.driver.Configuration$Shimmer3$SENSOR_ID');
-            this.comPort = comPort;
             this.obj = com.shimmerresearch.tools.matlab.ShimmerJavaClass();
-        end
-        
-        function [success, this] = connect(this)
-            this.obj.mBluetoothManager.connectShimmerThroughCommPort(this.comPort);
-
-            timeout = 15;
-            startTime = tic;
-            this.shimmer = [];
-
-            while isempty(this.shimmer) && toc(startTime) < timeout
-                pause(1);
-                this.shimmer = this.obj.mBluetoothManager.getShimmerDeviceBtConnected(this.comPort);
-
-                if ~isempty(this.shimmer)
-                    disp(['Device connected... Elapsed time: ', num2str(toc(startTime)), ' seconds']);
-                    success = true;
-                    pause(10);
-                    return;
-                end
-            end
-            success = false;
-        end
-        
-        function success = start(this)
-            this.shimmer = this.obj.mBluetoothManager.getShimmerDeviceBtConnected(this.comPort);
-            if isempty(this.shimmer)
-                error('Shimmer device is not connected.');
-            end
-            this.shimmer.startStreaming();
-            success = true;
+            this.bluetoothManager = this.obj.mBluetoothManager;
         end
         
         function quaternions = orientationModule(this, receivedData, dofMode)
-            this.shimmer = this.obj.mBluetoothManager.getShimmerDeviceBtConnected(this.comPort);
             if iscell(receivedData)
                 receivedData = receivedData{1};
             end
@@ -129,27 +96,6 @@ classdef ShimmerDeviceHandler
 
                     quaternions(i, :) = [qw, qx, qy, qz];
                 end
-            end
-        end
-        
-        function checkDeviceConnection(this, newData)
-            persistent dataPreviouslyReceived warningDisplayed
-
-            if isempty(dataPreviouslyReceived)
-                dataPreviouslyReceived = false;
-            end
-            if isempty(warningDisplayed)
-                warningDisplayed = false;
-            end
-
-            if isempty(newData)
-                if dataPreviouslyReceived && ~warningDisplayed
-                    uiwait(msgbox('Device disconnected.', 'Warning', 'warn'));
-                    warningDisplayed = true;
-                end
-            else
-                dataPreviouslyReceived = true;
-                warningDisplayed = false;
             end
         end
     end

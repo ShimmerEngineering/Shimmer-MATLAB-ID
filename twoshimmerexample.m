@@ -1,152 +1,168 @@
-function twoshimmerexample(comPort1, comPort2, captureDuration)
+function void = twoshimmerexample(comPort, comPort2 , captureDuration)
+%PLOTANDWRITEEXAMPLE - Demonstrate basic features of ShimmerHandleClass
+%
+%  PLOTANDWRITEEXAMPLE(COMPORT, CAPTUREDURATION, FILENAME) plots 3 
+%  accelerometer signals, 3 gyroscope signals and 3 magnetometer signals,
+%  from the Shimmer paired with COMPORT. The function 
+%  will stream data for a fixed duration of time defined by the constant 
+%  CAPTUREDURATION. The function also writes the data in a tab ddelimited 
+%  format to the file defined in FILENAME.
+%
+%  SYNOPSIS: plotandwriteexample(comPort, captureDuration, fileName)
+%
+%  INPUT: comPort - String value defining the COM port number for Shimmer
+%  INPUT: captureDuration - Numerical value defining the period of time 
+%                           (in seconds) for which the function will stream 
+%                           data from  the Shimmers.
+%  INPUT : fileName - String value defining the name of the file that data 
+%                     is written to in a comma delimited format.
+%  OUTPUT: none
+%
+%  EXAMPLE: plotandwriteexample('COM3', 30, 'testdata.dat')
+%
+%  See also ShimmerDeviceHandler
 
-%TWOSHIMMEREXAMPLE - Demonstrate basic features of ShimmerHandleClass
-%
-%  TWOSHIMMEREXAMPLE(COMPORT1, COMPORT2, CAPTUREDURATION) plots the 3
-%  accelerometer signals from the Shimmer paired with COMPORT1 and plots
-%  the 3 accelerometer signals from the Shimmer paired with COMPORT2. The
-%  function will stream data for a fixed duration of time defined by the
-%  constant CAPTUREDURATION. NOTE: This example uses the method 'getdata'
-%  which is a more advanced alternative to the 'getuncalibrateddata' method
-%  in the beta release. The user is advised to use the updated method
-%  'getdata'.
-%
-%  SYNOPSIS: twoshimmerexample(comPort1, comPort2, captureDuration)
-%
-%  INPUT: comPort1 - string value defining the COM port numbers for Shimmer 1
-%  INPUT: comPort2 - string value defining the COM port numbers for Shimmer 2
-%  INPUT: captureDuration - numerical value defining the period of time 
-%                        (in seconds) for which the function will stream 
-%                        data from  the Shimmers.
-%  
-%  EXAMPLE: twoshimmerexample('7','8',30)
-%
-%  See also plotandwriteexample ShimmerHandleClass
+%% definitions
 
+deviceHandler = ShimmerDeviceHandler();                                   % Define a handler 
+firsttime = true;
 
 % Note: these constants are only relevant to this examplescript and are not used
-% by the ShimmerHandle Class
+% by the ShimmerDevice Handler
 NO_SAMPLES_IN_PLOT = 500;                                                  % Number of samples that will be displayed in the plot at any one time
 DELAY_PERIOD = 0.2;                                                        % A delay period of time in seconds between data read operations
+numSamples = 0;
+
+addpath('./Resources/')                                                    % directory containing supporting functions
 
 %%
+deviceHandler.bluetoothManager.connectShimmerThroughCommPort(comPort);
+deviceHandler.bluetoothManager.connectShimmerThroughCommPort(comPort2);
+cleaner1 = onCleanup(@() deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).disconnect());  % Ensure disconnection on cleanup
+cleaner2 = onCleanup(@() deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort2).disconnect());  % Ensure disconnection on cleanup
+pause(10);
+% Ensure disconnection happens properly even if the workspace is cleared or the script is interrupted
 
-shimmer1 = ShimmerHandleClass(comPort1);                                   % Define shimmer1 as a ShimmerHandle Class instance with comPort1
-shimmer2 = ShimmerHandleClass(comPort2);                                   % Define shimmer2 as a ShimmerHandle Class instance with comPort2
-SensorMacros = SetEnabledSensorsMacrosClass;                               % assign user friendly macros for setenabledsensors
+if deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).isConnected() && deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort2).isConnected()
+    shimmerClone = deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).deepClone();
+    shimmerClone.setSamplingRateShimmer(51.2);
+    
+    shimmerClone.disableAllSensors();                                      % Disables all currently enabled sensors
+    shimmerClone.setEnabledAndDerivedSensorsAndUpdateMaps(0, 0);           % Resets configuration on enabled and derived sensors
+    
+    sensorIds = javaArray('java.lang.Integer', 3);
+    sensorIds(1) = java.lang.Integer(deviceHandler.sensorClass.SHIMMER_ANALOG_ACCEL);
+    sensorIds(2) = java.lang.Integer(deviceHandler.sensorClass.SHIMMER_MPU9X50_GYRO);
+    sensorIds(3) = java.lang.Integer(deviceHandler.sensorClass.SHIMMER_LSM303_MAG);
+
+    shimmerClone.setSensorIdsEnabled(sensorIds);
+
+    commType = javaMethod('valueOf', 'com.shimmerresearch.driver.Configuration$COMMUNICATION_TYPE', 'BLUETOOTH');
+    com.shimmerresearch.driverUtilities.AssembleShimmerConfig.generateSingleShimmerConfig(shimmerClone, commType);
+    deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).configureFromClone(shimmerClone);
+
+    %%
+
+    shimmer2Clone = deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort2).deepClone();
+    shimmer2Clone.setSamplingRateShimmer(51.2);
+    
+    shimmer2Clone.disableAllSensors();                                      % Disables all currently enabled sensors
+    shimmer2Clone.setEnabledAndDerivedSensorsAndUpdateMaps(0, 0);           % Resets configuration on enabled and derived sensors
+    shimmer2Clone.setSensorIdsEnabled(sensorIds);
+
+    commType = javaMethod('valueOf', 'com.shimmerresearch.driver.Configuration$COMMUNICATION_TYPE', 'BLUETOOTH');
+    com.shimmerresearch.driverUtilities.AssembleShimmerConfig.generateSingleShimmerConfig(shimmer2Clone, commType);
+    deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort2).configureFromClone(shimmer2Clone);
 
 
-if (shimmer1.connect && shimmer2.connect)                                  % TRUE if both shimmer 1 and shimmer 2 connect
+    pause(20);
+deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).startStreaming()
+deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort2).startStreaming()
     
-    % Define settings for shimmer1
-    shimmer1.setinternalboard('None');                                     % Set the shimmer 1 internal daughter board to 'None'
-    shimmer1.disableallsensors;                                             % disable all sensors
-    shimmer1.setenabledsensors(SensorMacros.ACCEL,1);                      % Enable the shimmer 1 accelerometer
-    shimmer1.setaccelrange(0);                                             % Set accelerometer range
-    shimmer1.setsamplingrate(51.2);                                        % Set the shimmer 1 sampling rate to 51.2Hz
-    
-   
-    
-    % Define settings for shimmer2
-    shimmer2.setinternalboard('None');                                     % Set the shimmer 2 internal daughter board to 'None'
-    shimmer2.disableallsensors;                                             % disable all sensors
-    shimmer2.setenabledsensors(SensorMacros.ACCEL,1);                      % Enable the shimmer 2 accelerometer 
-    shimmer2.setaccelrange(0);                                             % Set accelerometer range
-    shimmer2.setsamplingrate(51.2);                                        % Set the shimmer 2 sampling rate to 51.2Hz
-    
-
-    
-    if (shimmer1.start && shimmer2.start)                                  % TRUE if both shimmers start streaming
-        
-        uncalibDataShimmer1 = []; 
-        uncalibDataShimmer2 = [];
-        
-        h.figure1=figure('Name','Shimmer 1');                              % Create a handle to figure for plotting data from shimmer1
-        h.figure2=figure('Name','Shimmer 2');                              % Create a handle to figure for plotting data from shimmer2
-        
-        elapsedTime = 0;                                                   % Reset to 0
-        
+        elapsedTime = 0;                                                   % Reset to 0    
         tic;                                                               % Start timer
-        
+        toggle = true;
         while (elapsedTime < captureDuration)            
                       
-            pause(DELAY_PERIOD);                                           % Pause for this period of time on each iteration to allow data to arrive in the buffer
-            
-            
-            % Read and plot data for shimmer1
-            [uncalibratedData,signalName,signalFormat,signalUnit]=shimmer1.getdata('u');
-            uncalibDataShimmer1 = [uncalibDataShimmer1; uncalibratedData];    % Read the uncalibrated data for shimmer1 and add to previous data
-                 
-            if(length(uncalibDataShimmer1) > NO_SAMPLES_IN_PLOT)                 
-               uncalibDataShimmer1=uncalibDataShimmer1((length(uncalibDataShimmer1) - NO_SAMPLES_IN_PLOT):end, :);   % Trim excess previous data from array for plotting purposes
+            pause(DELAY_PERIOD);    
+            % Pause for this period of time on each iteration to allow data to arrive in the buffer
+            comPortUsed = comPort;
+            if (toggle)
+                data = deviceHandler.obj.receiveData(comPort);                                  % Read the latest data from shimmer data buffer, signalFormatArray defines the format of the data and signalUnitArray the unit
+            else
+                comPortUsed=comPort2;
+                data = deviceHandler.obj.receiveData(comPort2);                                  % Read the latest data from shimmer data buffer, signalFormatArray defines the format of the data and signalUnitArray the unit
             end
-           
-            if (isempty(uncalibDataShimmer1)~=1)
-                if (shimmer1.ShimmerVersion == 3)                              % get signal indices for Shimmer3
-                    chIndex(1) = find(ismember(signalName, 'Low Noise Accelerometer X'));
-                    chIndex(2) = find(ismember(signalName, 'Low Noise Accelerometer Y'));
-                    chIndex(3) = find(ismember(signalName, 'Low Noise Accelerometer Z'));
-                elseif (shimmer1.ShimmerVersion < 3)                           % get signal indices for Shimmer2/2r
-                    chIndex(1) = find(ismember(signalName, 'Accelerometer X'));
-                    chIndex(2) = find(ismember(signalName, 'Accelerometer Y'));
-                    chIndex(3) = find(ismember(signalName, 'Accelerometer Z'));
-                end
-                accelDataShimmer1 = [uncalibDataShimmer1(:,chIndex(1)), uncalibDataShimmer1(:,chIndex(2)), uncalibDataShimmer1(:,chIndex(3))]; % Extract only the columns of accelerometer data
-                set(0,'CurrentFigure',h.figure1);           
-                plot(accelDataShimmer1);                                       % Plot the accelerometer data
-                title('Shimmer 1 Accelerometer Data');                         % Add title to the plot
-                axis([0 NO_SAMPLES_IN_PLOT 0 4095]);                           % Define min and max values for axis , Shimmer 3 has an int16 for the digital accel so users can change accordingly
-                legend(char(signalName{chIndex(1)}),char(signalName{chIndex(2)}),char(signalName{chIndex(3)}))                          % Add legend to plot
+            toggle = ~toggle;
+            if (isempty(data))
+                continue;
+            end
+            newData = data(1);
+            signalNameArray = data(2);
+            signalFormatArray = data(3);
+            signalUnitArray = data(4);     
+            
+            signalNameCellArray = cell(numel(signalNameArray), 1);     
+            for i = 1:numel(signalNameArray)
+                signalNameCellArray{i} = char(signalNameArray(i));         % Convert each Java string to a MATLAB char array
+            end
+            
+            signalFormatCellArray = cell(numel(signalFormatArray), 1);     
+            for i = 1:numel(signalFormatArray)
+                signalFormatCellArray{i} = char(signalFormatArray(i));     % Convert each Java string to a MATLAB char array
+            end
+            
+            signalUnitCellArray = cell(numel(signalUnitArray), 1);     
+            for i = 1:numel(signalUnitArray)
+                signalUnitCellArray{i} = char(signalUnitArray(i));         % Convert each Java string to a MATLAB char array
+            end
+            
+            if(~isempty(signalNameCellArray))
+                chIndex(1) = find(ismember(signalNameCellArray, 'Timestamp')); % Get signal indices
+                chIndex(2) = find(ismember(signalNameCellArray, 'Accel_LN_X'));
+                chIndex(3) = find(ismember(signalNameCellArray, 'Accel_LN_Y'));
+                chIndex(4) = find(ismember(signalNameCellArray, 'Accel_LN_Z'));
+                chIndex(5) = find(ismember(signalNameCellArray, 'Gyro_X'));
+                chIndex(6) = find(ismember(signalNameCellArray, 'Gyro_Y'));
+                chIndex(7) = find(ismember(signalNameCellArray, 'Gyro_Z'));
+                chIndex(8) = find(ismember(signalNameCellArray, 'Mag_X'));
+                chIndex(9) = find(ismember(signalNameCellArray, 'Mag_Y'));
+                chIndex(10) = find(ismember(signalNameCellArray, 'Mag_Z'));
+            end
+
+            if ~isempty(newData)                                           % TRUE if new data has arrived
+                % Example numeric column
+                colData = newData(:, chIndex(2));   % 10×1 column
+                
+                % Replicate the string into a cell array with same number of rows
+                nRows = size(colData, 1);
+                comPortCol = repmat({comPortUsed}, nRows, 1);  
+                
+                % Combine numeric and string columns
+                combined = [num2cell(colData), comPortCol];
+                
+                % Display
+                disp('Data + COM Port Label:');
+                disp(combined);
 
             end
             
-
-             % Read and plot data for shimmer2            
-            [uncalibratedData,signalName,signalFormat,signalUnit]=shimmer2.getdata('u');
-            uncalibDataShimmer2 = [uncalibDataShimmer2; uncalibratedData];     % Read the uncalibrated data for shimmer2 and add to previous data
-            
-            if(length(uncalibDataShimmer2) > NO_SAMPLES_IN_PLOT)
-               uncalibDataShimmer2 = uncalibDataShimmer2((length(uncalibDataShimmer2) - NO_SAMPLES_IN_PLOT):end, :);   % Trim excess previous data from array for plotting purposes
-            end
-                    
-            if (isempty(uncalibDataShimmer2)~=1)
-                if (shimmer2.ShimmerVersion == 3)                              % get signal indices for Shimmer3
-                    chIndex2(1) = find(ismember(signalName, 'Low Noise Accelerometer X'));
-                    chIndex2(2) = find(ismember(signalName, 'Low Noise Accelerometer Y'));
-                    chIndex2(3) = find(ismember(signalName, 'Low Noise Accelerometer Z'));
-                elseif (shimmer2.ShimmerVersion < 3)                           % get indices for Shimmer2/2r
-                    chIndex2(1) = find(ismember(signalName, 'Accelerometer X'));
-                    chIndex2(2) = find(ismember(signalName, 'Accelerometer Y'));
-                    chIndex2(3) = find(ismember(signalName, 'Accelerometer Z'));
-                end
-                accelDataShimmer2 = [uncalibDataShimmer2(:,chIndex2(1)), uncalibDataShimmer2(:,chIndex2(2)), uncalibDataShimmer2(:,chIndex2(3))]; % Extract only the columns of gyroscope data
-                set(0,'CurrentFigure',h.figure2);                     
-                plot(accelDataShimmer2);                                   % Plot the gyroscope data
-                title('Shimmer 2 Accelerometer Data');                     % Add title to the plot
-                axis([0 NO_SAMPLES_IN_PLOT 0 4095]);                       % Define min and max values for axis , Shimmer 3 has an int16 for the digital accel so users can change accordingly
-                legend(char(signalName{chIndex2(1)}),char(signalName{chIndex2(2)}),char(signalName{chIndex2(3)}))                              % Add legend to plot
-            end       
             elapsedTime = elapsedTime + toc;                               % Stop timer and add to elapsed time
-            tic;                                                           % Start timer
+            tic;                                                           % Start timer           
             
         end  
         
         elapsedTime = elapsedTime + toc;                                   % Stop timer
-        
-        shimmer1.stop;                                                     % Stop data streaming from shimmer1                                                    
-        shimmer2.stop;                                                     % Stop data streaming from shimmer2
-        
-    else
-        
-        shimmer1.stop;                                                     % Stop data streaming from shimmer1 (if it has started streaming)                                                
-        shimmer2.stop;                                                     % Stop data streaming from shimmer2 (if it has started streaming)  
-        
-    end            
+        fprintf('The percentage of received packets: %d \n',deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).getPacketReceptionRateCurrent()); % Detect loss packets
+        fprintf('The percentage of received packets: %d \n',deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort2).getPacketReceptionRateCurrent()); % Detect loss packets
+        deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).stopStreaming();                                       % Stop data streaming                                                       % Stop data streaming             
+        deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort2).stopStreaming();                                       % Stop data streaming                                                       % Stop data streaming             
     
-    shimmer1.disconnect;                                                   % Disconnect from shimmer1
-    shimmer2.disconnect;                                                   % Disconnect from shimmer2    
+    
+    deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).disconnect();
+    deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort2).disconnect();
     
 end
 
-clear all;                                                                 % Remove all variables from memory
-
+       
+end
