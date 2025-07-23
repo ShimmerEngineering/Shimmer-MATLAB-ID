@@ -16,7 +16,7 @@ function void = plotandwriteemgexample(comPort, captureDuration, fileName)
     %  See also newplotandwriteexample ShimmerDeviceHandler
     
     %% definitions
-    shimmer = ShimmerDeviceHandler(comPort);                               % Define shimmer as a ShimmerHandle Class instance with comPort1
+    deviceHandler = ShimmerDeviceHandler();                                   % Define a handler
 
     fs = 512;                                                              % sample rate in [Hz]     
 
@@ -35,54 +35,59 @@ function void = plotandwriteemgexample(comPort, captureDuration, fileName)
     % filtering settings
     fm = 50;                                                                   % mains frequency [Hz]
     fchp = 5;                                                                  % corner frequency highpassfilter [Hz]; Shimmer recommends 5Hz to remove DC-offset and movement artifacts
-    nPoles = 4;                                                                % number of poles (HPF, LPF)
-    pbRipple = 0.5;                                                            % pass band ripple (%)
-    
+   
     HPF = true;                                                                % enable (true) or disable (false) highpass filter
     LPF = true;                                                                % enable (true) or disable (false) lowpass filter
     BSF = true;                                                                % enable (true) or disable (false) bandstop filter
     
     % highpass filters for ExG channels
     if (HPF)
-        hpfexg1ch1 = FilterClass(FilterClass.HPF,fs,fchp,nPoles,pbRipple);
-        hpfexg1ch2 = FilterClass(FilterClass.HPF,fs,fchp,nPoles,pbRipple);
+        hpfexg1ch1 = com.shimmerresearch.algorithms.Filter(com.shimmerresearch.algorithms.Filter.HIGH_PASS,fs,fchp);
+        hpfexg1ch2 = com.shimmerresearch.algorithms.Filter(com.shimmerresearch.algorithms.Filter.HIGH_PASS,fs,fchp);
     end
     if (LPF)
         % lowpass filters for ExG channels
-        lpfexg1ch1 = FilterClass(FilterClass.LPF,fs,fs/2-1,nPoles,pbRipple);
-        lpfexg1ch2 = FilterClass(FilterClass.LPF,fs,fs/2-1,nPoles,pbRipple);
+        lpfexg1ch1 = com.shimmerresearch.algorithms.Filter(com.shimmerresearch.algorithms.Filter.LOW_PASS,fs,fs/2-1);
+        lpfexg1ch2 = com.shimmerresearch.algorithms.Filter(com.shimmerresearch.algorithms.Filter.LOW_PASS,fs,fs/2-1);
     end
     if (BSF)
         % bandstop filters for ExG channels;
         % cornerfrequencies at +1Hz and -1Hz from mains frequency
-        bsfexg1ch1 = FilterClass(FilterClass.LPF,fs,[fm-1,fm+1],nPoles,pbRipple);
-        bsfexg1ch2 = FilterClass(FilterClass.LPF,fs,[fm-1,fm+1],nPoles,pbRipple);
+        bsfexg1ch1 = com.shimmerresearch.algorithms.Filter(com.shimmerresearch.algorithms.Filter.BAND_STOP,fs,[fm-1 fm+1]);
+        bsfexg1ch2 = com.shimmerresearch.algorithms.Filter(com.shimmerresearch.algorithms.Filter.BAND_STOP,fs,[fm-1 fm+1]);
     end
 
 %%
 
-[success, obj] = shimmer.connect();
+deviceHandler.bluetoothManager.connectShimmerThroughCommPort(comPort);
+% Ensure disconnection happens properly even if the workspace is cleared or the script is interrupted
+cleaner = onCleanup(@() deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).disconnect());  % Ensure disconnection on cleanup
+pause(10);
 
-if success
+if deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).isConnected()
     
-    shimmerClone = obj.shimmer.deepClone();
-    shimmerClone.setSamplingRateShimmer(51.2);
-    
+    shimmerClone = deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).deepClone();
+    shimmerClone.setSamplingRateShimmer(fs);
+
     shimmerClone.disableAllSensors();                                      % Disables all currently enabled sensors
     shimmerClone.setEnabledAndDerivedSensorsAndUpdateMaps(0, 0);           % Resets configuration on enabled and derived sensors
-    
+
     sensorIds = javaArray('java.lang.Integer', 1);
-    sensorIds(1) = java.lang.Integer(obj.sensorClass.HOST_EMG);
+    sensorIds(1) = java.lang.Integer(deviceHandler.sensorClass.HOST_EMG);
 
     shimmerClone.setSensorIdsEnabled(sensorIds);
 
+    shimmerClone.setSensorIdsEnabled(sensorIds);
+    shimmerClone.setConfigValueUsingConfigLabel(java.lang.Integer(deviceHandler.sensorClass.HOST_EMG),'Resolution',java.lang.Integer(1));
     commType = javaMethod('valueOf', 'com.shimmerresearch.driver.Configuration$COMMUNICATION_TYPE', 'BLUETOOTH');
     com.shimmerresearch.driverUtilities.AssembleShimmerConfig.generateSingleShimmerConfig(shimmerClone, commType);
-    obj.shimmer.configureFromClone(shimmerClone);
+    deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).configureFromClone(shimmerClone);
+    pause(20);
+    deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).startStreaming()
 
     pause(20);
     
-    if shimmer.start()
+    deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).startStreaming()
 
         plotData = [];                                               
         timeStamp = [];
@@ -98,7 +103,10 @@ if success
                       
             pause(DELAY_PERIOD);                                           % pause for this period of time on each iteration to allow data to arrive in the buffer
             
-            data = obj.obj.receiveData();
+            data = deviceHandler.obj.receiveData(comPort);                 % Read the latest data from shimmer data buffer, signalFormatArray defines the format of the data and signalUnitArray the unit
+            if (isempty(data))
+                continue;
+            end
             newData = data(1);
             signalNameArray = data(2);
             signalFormatArray = data(3);
@@ -134,18 +142,24 @@ if success
                 EMGDataFiltered = EMGData;
                 % filter the data
                 if HPF % filter newData with highpassfilter to remove DC-offset
-                    EMGDataFiltered(:,1) = hpfexg1ch1.filterData(EMGDataFiltered(:,1));
-                    EMGDataFiltered(:,2) = hpfexg1ch2.filterData(EMGDataFiltered(:,2));
+                    for i = 1:length(EMGDataFiltered)
+                        EMGDataFiltered(i,1) = hpfexg1ch1.filterData(EMGDataFiltered(i,1));
+                        EMGDataFiltered(i,2) = hpfexg1ch2.filterData(EMGDataFiltered(i,2));
+                    end
                 end
 
                 if BSF % filter highpassfiltered data with bandstopfilter to suppress mains interference
-                    EMGDataFiltered(:,1) = bsfexg1ch1.filterData(EMGDataFiltered(:,1));
-                    EMGDataFiltered(:,2) = bsfexg1ch2.filterData(EMGDataFiltered(:,2));
+                    for i = 1:length(EMGDataFiltered)
+                        EMGDataFiltered(i,1) = bsfexg1ch1.filterData(EMGDataFiltered(i,1));
+                        EMGDataFiltered(i,2) = bsfexg1ch2.filterData(EMGDataFiltered(i,2));
+                    end
                 end
 
                 if LPF % filter bandstopfiltered data with lowpassfilter to avoid aliasing
-                    EMGDataFiltered(:,1) = lpfexg1ch1.filterData(EMGDataFiltered(:,1));
-                    EMGDataFiltered(:,2) = lpfexg1ch2.filterData(EMGDataFiltered(:,2));
+                    for i = 1:length(EMGDataFiltered)
+                        EMGDataFiltered(i,1) = lpfexg1ch1.filterData(EMGDataFiltered(i,1));
+                        EMGDataFiltered(i,2) = lpfexg1ch2.filterData(EMGDataFiltered(i,2));
+                    end
                 end
 
                 dlmwrite(fileName, double(EMGDataFiltered), '-append', 'delimiter', '\t','precision',16); % Append the new data to the file in a tab delimited format
@@ -201,13 +215,14 @@ if success
             end  
 
             elapsedTime = elapsedTime + toc;                               % Update elapsedTime with the time that elapsed since starting the timer
-            fprintf('The percentage of received packets: %d \n',obj.shimmer.getPacketReceptionRateCurrent()); % Detect loss packets
-            obj.shimmer.stopStreaming();                                                  % Stop data streaming                                                    
-
+            
+            fprintf('The percentage of received packets: %d \n',deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).getPacketReceptionRateCurrent()); % Detect loss packets
+            deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).stopStreaming();                                       % Stop data streaming                                                       % Stop data streaming
+            deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).disconnect();
         end 
 
-    end
     
-    obj.shimmer.disconnect();
+    
+
 end
 

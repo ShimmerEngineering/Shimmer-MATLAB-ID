@@ -49,6 +49,7 @@ DELAY_PERIOD = 0.2;                                                        % A d
 numSamples = 0;
 
 %% filter settings
+fm = 50;              
 HPF = true;                                                            % enable (true) or disable (false) highpass filter
 LPF = true;                                                            % enable (true) or disable (false) lowpass filter
 BSF = true;                                                            % enable (true) or disable (false) bandstop filter
@@ -64,7 +65,7 @@ end
 % bandstop filters for ExG channels;
 % cornerfrequencies at +1Hz and -1Hz from mains frequency
 if (BSF)
-    bsfexg1ch1 = com.shimmerresearch.algorithms.Filter(com.shimmerresearch.algorithms.Filter.BAND_STOP,fs,[49 51]);
+    bsfexg1ch1 = com.shimmerresearch.algorithms.Filter(com.shimmerresearch.algorithms.Filter.BAND_STOP,fs,[fm-1 fm+1]);
 end
 
 
