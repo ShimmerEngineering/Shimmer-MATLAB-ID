@@ -1,4 +1,4 @@
-function void = newplotandwriteemgexample(comPort, captureDuration, fileName)
+function void = plotandwriteemgexample(comPort, captureDuration, fileName)
     %NEWPLOTANDWRITEEMGEXAMPLE - Plotting emg signal and write to file
     %  SYNOPSIS: newplotandwriteemgexample(comPort, captureDuration,
     %  fileName)
