@@ -98,13 +98,8 @@ if deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).isConnect
             end
             
             if(~isempty(signalNameCellArray))
-                 if hwid.equals('Shimmer3R')
-                     chIndex(1) = find(ismember(signalNameCellArray, 'Pressure_BMP390'));   % get signal indices
-                     chIndex(2) = find(ismember(signalNameCellArray, 'Temperature_BMP390'));% get signal indices
-                 else
-                     chIndex(1) = find(ismember(signalNameCellArray, 'Pressure_BMP180'));   % get signal indices
-                     chIndex(2) = find(ismember(signalNameCellArray, 'Temperature_BMP180'));% get signal indices
-                 end
+                     chIndex(1) = find(startsWith(signalNameCellArray, 'Pressure'));
+                     chIndex(2) = find(startsWith(signalNameCellArray, 'Temperature'));
             end
             
             if (firsttime==true && isempty(newData)~=1)
