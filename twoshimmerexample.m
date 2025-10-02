@@ -54,7 +54,12 @@ if deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).isConnect
     sensorIds(1) = java.lang.Integer(deviceHandler.sensorClass.SHIMMER_ANALOG_ACCEL);
     sensorIds(2) = java.lang.Integer(deviceHandler.sensorClass.SHIMMER_MPU9X50_GYRO);
     sensorIds(3) = java.lang.Integer(deviceHandler.sensorClass.SHIMMER_LSM303_MAG);
-
+    hwid = shimmerClone.getHardwareVersionParsed();
+    if hwid.equals('Shimmer3R')
+        sensorIds(1) = java.lang.Integer(deviceHandler.sensorClass.SHIMMER_LSM6DSV_ACCEL_LN);
+        sensorIds(2) = java.lang.Integer(deviceHandler.sensorClass.SHIMMER_LSM6DSV_GYRO);
+        sensorIds(3) = java.lang.Integer(deviceHandler.sensorClass.SHIMMER_LIS2MDL_MAG);
+    end
     shimmerClone.setSensorIdsEnabled(sensorIds);
 
     commType = javaMethod('valueOf', 'com.shimmerresearch.driver.Configuration$COMMUNICATION_TYPE', 'BLUETOOTH');
@@ -68,6 +73,19 @@ if deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).isConnect
     
     shimmer2Clone.disableAllSensors();                                      % Disables all currently enabled sensors
     shimmer2Clone.setEnabledAndDerivedSensorsAndUpdateMaps(0, 0);           % Resets configuration on enabled and derived sensors
+
+    sensorIds = javaArray('java.lang.Integer', 3);
+    sensorIds(1) = java.lang.Integer(deviceHandler.sensorClass.SHIMMER_ANALOG_ACCEL);
+    sensorIds(2) = java.lang.Integer(deviceHandler.sensorClass.SHIMMER_MPU9X50_GYRO);
+    sensorIds(3) = java.lang.Integer(deviceHandler.sensorClass.SHIMMER_LSM303_MAG);
+    hwid = shimmer2Clone.getHardwareVersionParsed();
+    if hwid.equals('Shimmer3R')
+        sensorIds(1) = java.lang.Integer(deviceHandler.sensorClass.SHIMMER_LSM6DSV_ACCEL_LN);
+        sensorIds(2) = java.lang.Integer(deviceHandler.sensorClass.SHIMMER_LSM6DSV_GYRO);
+        sensorIds(3) = java.lang.Integer(deviceHandler.sensorClass.SHIMMER_LIS2MDL_MAG);
+    end
+
+
     shimmer2Clone.setSensorIdsEnabled(sensorIds);
 
     commType = javaMethod('valueOf', 'com.shimmerresearch.driver.Configuration$COMMUNICATION_TYPE', 'BLUETOOTH');
@@ -76,8 +94,8 @@ if deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).isConnect
 
 
     pause(20);
-deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).startStreaming()
-deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort2).startStreaming()
+    deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).startStreaming()
+    deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort2).startStreaming()
     
         elapsedTime = 0;                                                   % Reset to 0    
         tic;                                                               % Start timer

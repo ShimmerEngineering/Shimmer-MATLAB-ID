@@ -53,7 +53,12 @@ if deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).isConnect
     sensorIds(1) = java.lang.Integer(deviceHandler.sensorClass.SHIMMER_ANALOG_ACCEL);
     sensorIds(2) = java.lang.Integer(deviceHandler.sensorClass.SHIMMER_MPU9X50_GYRO);
     sensorIds(3) = java.lang.Integer(deviceHandler.sensorClass.SHIMMER_LSM303_MAG);
-
+    hwid = shimmerClone.getHardwareVersionParsed();
+    if hwid.equals('Shimmer3R')
+        sensorIds(1) = java.lang.Integer(deviceHandler.sensorClass.SHIMMER_LSM6DSV_ACCEL_LN);
+        sensorIds(2) = java.lang.Integer(deviceHandler.sensorClass.SHIMMER_LSM6DSV_GYRO);
+        sensorIds(3) = java.lang.Integer(deviceHandler.sensorClass.SHIMMER_LIS2MDL_MAG);
+    end
     shimmerClone.setSensorIdsEnabled(sensorIds);
 
     commType = javaMethod('valueOf', 'com.shimmerresearch.driver.Configuration$COMMUNICATION_TYPE', 'BLUETOOTH');
