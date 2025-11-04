@@ -12,9 +12,6 @@ function orientation3Dexample(comPort, captureDuration, fileName)
 %  will stream data for a fixed duration of time defined by the constant
 %  CAPTUREDURATION. The function also writes the data in a tab delimited
 %  format to the file defined in FILENAME.
-%  NOTE: This example uses the method 'getdata' which is a more advanced
-%  alternative to the 'getuncalibrateddata' method in the beta release.
-%  The user is advised to use the updated method 'getdata'.
 %
 %  SYNOPSIS: orientation3Dexample(comPort, captureDuration, fileName)
 %
@@ -26,35 +23,54 @@ function orientation3Dexample(comPort, captureDuration, fileName)
 %                     is written to in a comma delimited format.
 %  OUTPUT: none
 %
-%  EXAMPLE: orientation3Dexample('7', 30, 'testdata.dat')
+%  EXAMPLE: orientation3Dexample('COM3', 30, 'testdata.dat')
 %
-%  See also plotandwriteexample twoshimmerexample ShimmerHandleClass
+%  See also plotandwriteexample ShimmerDeviceHandler
+
+newSignalName = {'Quat_Madge_9DOF_W', 'Quat_Madge_9DOF_X', 'Quat_Madge_9DOF_Y', 'Quat_Madge_9DOF_Z'};
+newSignalFormat = {'CAL', 'CAL', 'CAL', 'CAL'};
+newSignalUnit = {'no_units', 'no_units', 'no_units', 'no_units'};
 
 addpath('./quaternion/')                                                   % directory containing quaternion functions
 addpath('./Resources/')                                                    % directory containing supporting functions
 
-SensorMacros = SetEnabledSensorsMacrosClass;                               % assign user friendly macros for setenabledsensors
+deviceHandler = ShimmerDeviceHandler();                                   % Define a handler 
 
-% Note: these constants are only relevant to this examplescript and are not used
-% by the ShimmerHandle Class
-DELAY_PERIOD = 0.2;                                                        % A delay period of time in seconds between data read operations
-
-shimmer = ShimmerHandleClass(comPort);                                     % Define shimmer as a ShimmerHandle Class instance with comPort1
+DELAY_PERIOD = 0.2; 
 firsttime = true;
 
-if (shimmer.connect)                                                       % TRUE if the shimmer connects
+deviceHandler.bluetoothManager.connectShimmerThroughCommPort(comPort);
+cleaner = onCleanup(@() deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).disconnect());  % Ensure disconnection on cleanup
+pause(10);
+% Ensure disconnection happens properly even if the workspace is cleared or the script is interrupted
+if deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).isConnected()
+    shimmerClone = deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).deepClone();
+    shimmerClone.setSamplingRateShimmer(51.2);
     
-    % Define settings for shimmer
-    shimmer.setsamplingrate(51.2);                                         % Set the shimmer sampling rate to 51.2Hz
-    shimmer.setinternalboard('9DOF');                                      % Set the shimmer internal daughter board to '9DOF'
-    shimmer.disableallsensors;                                             % disable all sensors
-    shimmer.setenabledsensors(SensorMacros.GYRO,1,SensorMacros.MAG,1,...   % Enable the gyroscope, magnetometer and accelerometer.
-    SensorMacros.ACCEL,1);                                                  
-    shimmer.setaccelrange(0);                                              % Set the accelerometer range to 0 (+/- 1.5g for Shimmer2/2r, +/- 2.0g for Shimmer3)
-    shimmer.setorientation3D(1);                                           % Enable orientation3D
-    shimmer.setgyroinusecalibration(1);                                    % Enable gyro in-use calibration
+    shimmerClone.disableAllSensors();                                      % Disables all currently enabled sensors
+    shimmerClone.setEnabledAndDerivedSensorsAndUpdateMaps(0, 0);           % Resets configuration on enabled and derived sensors
     
-    if (shimmer.start)                                                     % TRUE if the shimmer starts streaming
+    sensorIds = javaArray('java.lang.Integer', 3);
+
+
+    sensorIds(1) = java.lang.Integer(deviceHandler.sensorClass.SHIMMER_ANALOG_ACCEL);
+    sensorIds(2) = java.lang.Integer(deviceHandler.sensorClass.SHIMMER_MPU9X50_GYRO);
+    sensorIds(3) = java.lang.Integer(deviceHandler.sensorClass.SHIMMER_LSM303_MAG);
+    hwid = shimmerClone.getHardwareVersionParsed();
+    if hwid.equals('Shimmer3R')
+        sensorIds(1) = java.lang.Integer(deviceHandler.sensorClass.SHIMMER_LSM6DSV_ACCEL_LN);
+        sensorIds(2) = java.lang.Integer(deviceHandler.sensorClass.SHIMMER_LSM6DSV_GYRO);
+        sensorIds(3) = java.lang.Integer(deviceHandler.sensorClass.SHIMMER_LIS2MDL_MAG);
+    end
+    shimmerClone.setSensorIdsEnabled(sensorIds);
+
+    commType = javaMethod('valueOf', 'com.shimmerresearch.driver.Configuration$COMMUNICATION_TYPE', 'BLUETOOTH');
+    com.shimmerresearch.driverUtilities.AssembleShimmerConfig.generateSingleShimmerConfig(shimmerClone, commType);
+    deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).configureFromClone(shimmerClone);
+
+    pause(20);
+    
+    deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).startStreaming()
         
         % initial viewpoint for 3D visualisation
         cameraUpVector = [0,1,0,0];
@@ -88,7 +104,7 @@ if (shimmer.connect)                                                       % TRU
         
         uicontrol('Style', 'pushbutton', 'String', 'Reset',...
             'Position', [80 20 50 20],...
-            'Callback', {@resetaxes});                                       % Pushbutton to reset the viewpoint
+            'Callback', {@resetaxes});                                     % Pushbutton to reset the viewpoint
         
         elapsedTime = 0;                                                   % Reset to 0
         
@@ -98,24 +114,77 @@ if (shimmer.connect)                                                       % TRU
             
             pause(DELAY_PERIOD);                                           % Pause for this period of time on each iteration to allow data to arrive in the buffer
             
-            [newData,signalNameArray,signalFormatArray,signalUnitArray] = shimmer.getdata('c');   % Read the latest data from shimmer data buffer, signalFormatArray defines the format of the data and signalUnitArray the unit
+            data = deviceHandler.obj.receiveData(comPort);                                  % Read the latest data from shimmer data buffer, signalFormatArray defines the format of the data and signalUnitArray the unit
+            if (isempty(data))
+                continue;
+            end
+            newData = data(1);
+            %shimmer.checkDeviceConnection(newData);
+            
+            signalNameArray = data(2);
+            signalFormatArray = data(3);
+            signalUnitArray = data(4);
+            
+            signalNameCellArray = cell(numel(signalNameArray), 1);     
+            for i = 1:numel(signalNameArray)
+                signalNameCellArray{i} = char(signalNameArray(i));         % Convert each Java string to a MATLAB char array
+            end
+            
+            signalFormatCellArray = cell(numel(signalFormatArray), 1);     
+            for i = 1:numel(signalFormatArray)
+                signalFormatCellArray{i} = char(signalFormatArray(i));     % Convert each Java string to a MATLAB char array
+            end
+            
+            signalUnitCellArray = cell(numel(signalUnitArray), 1);     
+            for i = 1:numel(signalUnitArray)
+                signalUnitCellArray{i} = char(signalUnitArray(i));         % Convert each Java string to a MATLAB char array
+            end
+            
+            if(~isempty(signalNameCellArray))
+                chIndex(1) = find(ismember(signalNameCellArray, 'Timestamp')); % Get signal indices
+                chIndex(2) = find(ismember(signalNameCellArray, 'Accel_LN_X'));
+                chIndex(3) = find(ismember(signalNameCellArray, 'Accel_LN_Y'));
+                chIndex(4) = find(ismember(signalNameCellArray, 'Accel_LN_Z'));
+                chIndex(5) = find(ismember(signalNameCellArray, 'Gyro_X'));
+                chIndex(6) = find(ismember(signalNameCellArray, 'Gyro_Y'));
+                chIndex(7) = find(ismember(signalNameCellArray, 'Gyro_Z'));
+                chIndex(8) = find(ismember(signalNameCellArray, 'Mag_X'));
+                chIndex(9) = find(ismember(signalNameCellArray, 'Mag_Y'));
+                chIndex(10) = find(ismember(signalNameCellArray, 'Mag_Z'));
+            end
             
             if (firsttime==true && isempty(newData)~=1)
-                firsttime = writeHeadersToFile(fileName,signalNameArray,signalFormatArray,signalUnitArray);
+               
+                % Adding new quaternion header to new file
+                newChIndex = chIndex;
+                
+                signalNameCellArray = [signalNameCellArray; newSignalName(:)];
+                signalFormatCellArray = [signalFormatCellArray; newSignalFormat(:)];
+                signalUnitCellArray = [signalUnitCellArray; newSignalUnit(:)];
+                
+                newChIndex(11) = find(ismember(signalNameCellArray, 'Quat_Madge_9DOF_W'));
+                newChIndex(12) = find(ismember(signalNameCellArray, 'Quat_Madge_9DOF_X'));
+                newChIndex(13) = find(ismember(signalNameCellArray, 'Quat_Madge_9DOF_Y'));
+                newChIndex(14) = find(ismember(signalNameCellArray, 'Quat_Madge_9DOF_Z'));
+                
+                firsttime = newWriteHeadersToFile(fileName,signalNameCellArray(newChIndex),signalFormatCellArray(newChIndex),signalUnitCellArray(newChIndex));
             end
             
             if ~isempty(newData)                                                                          % TRUE if new data has arrived
                 
-                allData = [allData; newData];
+                filtredData = newData(:, chIndex);
+                quaternionData = deviceHandler.orientationModule(filtredData,'9dof');
                 
-                dlmwrite(fileName, newData, '-append', 'delimiter', '\t','precision',16);                                % Append the new data to the file in a tab delimited format
+                updatedData = [filtredData quaternionData];
                 
-                quaternionChannels(1) = find(ismember(signalNameArray, 'Quaternion 0'));                  % Find Quaternion signal indices.
-                quaternionChannels(2) = find(ismember(signalNameArray, 'Quaternion 1'));
-                quaternionChannels(3) = find(ismember(signalNameArray, 'Quaternion 2'));
-                quaternionChannels(4) = find(ismember(signalNameArray, 'Quaternion 3'));
+                dlmwrite(fileName, double(updatedData), '-append', 'delimiter', '\t', 'precision', 16);
                 
-                quaternion = newData(end, quaternionChannels);                                            % Only use the most recent quaternion sample for the graphic
+                quaternionChannels(1) = 1;                                 % Find Quaternion signal indices.
+                quaternionChannels(2) = 2;
+                quaternionChannels(3) = 3;
+                quaternionChannels(4) = 4;
+                
+                quaternion = quaternionData(end, quaternionChannels);      % Only use the most recent quaternion sample for the graphic
                                 
                 shimmer3dRotated.p1 = quatrotate(quaternion, [0 shimmer3d.p1]);                           % Rotate the vertices
                 shimmer3dRotated.p2 = quatrotate(quaternion, [0 shimmer3d.p2]);
@@ -198,20 +267,20 @@ if (shimmer.connect)                                                       % TRU
         end
         
         elapsedTime = elapsedTime + toc;                                                                  % Stop timer
-        fprintf('The percentage of received packets: %d \n',shimmer.getpercentageofpacketsreceived(allData(:,1))); % Detect lost packets
-        shimmer.stop;                                                                                     % Stop data streaming
-        
-    end
-    shimmer.disconnect;                                                                                   % Disconnect from shimmer
+        fprintf('The percentage of received packets: %d \n',deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).getPacketReceptionRateCurrent()); % Detect lost packets
+        deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).stopStreaming();     
+        % Stop data streaming
+        deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).disconnect;     
+    end 
     
-end
+
 
     function setaxes(hObj,event) 
         % Called when user presses "Set" button  
 
         % Calculate camera position and angle for front view
         cameraPosition = quatrotate(quaternion,[0,0,0,1]);
-        if (shimmer.getshimmerversion~=3)
+        if (deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).getHardwareVersion()~=3)
             cameraUpVector = quatrotate(quaternion,[0,1,0,0]);  % orientation for Shimmer2/2r 
         else
             cameraUpVector = quatrotate(quaternion,[0,-1,0,0]); % orientation for Shimmer3
@@ -228,5 +297,4 @@ end
     end
 
 end
-
 
