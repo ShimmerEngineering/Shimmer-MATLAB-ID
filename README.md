@@ -5,6 +5,17 @@ Shimmer2, Shimmer2r, Shimmer3 and Verisense in the development of Shimmer based 
 For Shimmer 3 devices to begin using the Shimmer Matlab Instrument Driver please refer to the
 Shimmer Matlab Instrument Driver User Manual. In order to communicate changes more effectively we will be transitioning to the use of Github and will no longer be updating the user guide from Rev2.9 onwards. We will maintain providing keeping the user guide in the repository for Shimmer3 users.
 
+**Support for Shimmer3R can now be found [here](https://github.com/ShimmerEngineering/Shimmer-MATLAB-ID/tree/v3.0.0)**
+
+# [Rev3.0.0 (Alpha)](https://github.com/ShimmerEngineering/Shimmer-MATLAB-ID/tree/v3.0.0)
+Release date 4/11/2025, will merge into master by early February, feedback is welcomed
+
+## Changes since Rev 2.9
+### Modifications
+Added Shimmer3R Support
+
+Moved to using ShimmerJavaAndroidAPI, we will no longer support Realterm moving forward
+
 # Rev2.9
 Release date 17/06/2022
 
@@ -536,5 +547,6 @@ Release date 19/09/2017.
 - Bugfix -> HardwareCompatibilityCode for Shimmer3 IMU (SR31).
 - Minor other bugfixes.
 - Examples now also write signal format/units to file.
+
 
 
