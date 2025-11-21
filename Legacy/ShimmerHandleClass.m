@@ -2620,7 +2620,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 fprintf('Warning: setdefaultecgparameters - Command is not supported for this firmware version, please update firmware.\n');
                 isSetEcg1=false;
                 isSetEcg2=false;
-            elseif (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3)
+            elseif (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 || thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3R)
                 if (thisShimmer.SamplingRate <= 125)         % set default parameter for ecg datarate as close as possible to Shimmer sampling rate; but never lower
                     datarate = 0;                            % set data rate to 125Hz
                 elseif (thisShimmer.SamplingRate <= 250)
@@ -2670,7 +2670,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 fprintf('Warning: setdefaultecgparameters - Command is not supported for this firmware version, please update firmware.\n');
                 isSetEmg1=false;
                 isSetEmg2=false;
-            elseif (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3)
+            elseif (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 || thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3R)
                 if (thisShimmer.SamplingRate <= 125)          % set default parameter for ecg datarate as close as possible to Shimmer sampling rate; but never lower
                     datarate = 0;                            % set data rate to 125Hz
                 elseif (thisShimmer.SamplingRate <= 250)
@@ -2731,7 +2731,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             if (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 && thisShimmer.FirmwareCompatibilityCode < 3)
                 fprintf('Warning: setexgconfiguration - Command is not supported for this firmware version, please update firmware.\n');
                 isSet = false;
-            elseif (strcmp(thisShimmer.State,'Connected') && thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3)     % Shimmer must be in a Connected state
+            elseif (strcmp(thisShimmer.State,'Connected') && (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 || thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3R))     % Shimmer must be in a Connected state
                 isWritten = writeexgconfiguration(thisShimmer,exgconfiguration,chipIdentifier);           % Write exg configuration to the Shimmer
                 if (isWritten)
                     isRead = readexgconfiguration(thisShimmer,chipIdentifier);                     % Following a succesful write, call the readexgconfiguration function which updates the exg configuration. 
