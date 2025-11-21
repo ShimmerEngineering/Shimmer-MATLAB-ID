@@ -7361,7 +7361,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     if ~isempty(shimmerResponse)
                         
                         if (shimmerResponse(1) == thisShimmer.SAMPLING_RATE_RESPONSE)
-                            if (thisShimmer.ShimmerVersion ~= thisShimmer.SHIMMER_3 || thisShimmer.ShimmerVersion ~= thisShimmer.SHIMMER_3R)
+                            if (thisShimmer.ShimmerVersion ~= thisShimmer.SHIMMER_3 && thisShimmer.ShimmerVersion ~= thisShimmer.SHIMMER_3R)
                                 if shimmerResponse(2) == 255                                % samplingRate == 0 is a special case, refer to 'Sampling Rate Table.txt' for more details
                                     thisShimmer.SamplingRate = 0;
                                 else
