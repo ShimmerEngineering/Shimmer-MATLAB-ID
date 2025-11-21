@@ -519,6 +519,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
         SHIMMER_2 = 1;
         SHIMMER_2R = 2;
         SHIMMER_3 = 3;
+        SHIMMER_3R = 10;
         
         INTERNAL_BOARDS_AVAILABLE = [cellstr('None'); cellstr('Gyro'); cellstr('Mag'); cellstr('9DOF'); cellstr('EXG'); cellstr('ECG'); cellstr('EMG'); cellstr('GSR'); cellstr('Strain Gauge'); cellstr('Bridge Amplifier')]; % Cell array of string constants conatining names of valid internal daughter boards
                 
@@ -647,7 +648,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         disp(['setsamplingrate - Shimmer Sampling Rate is set to ' num2str(samplingRate) 'Hz']);
                         
                         % set ExG rate as close as possible to Shimmer sampling rate; but never lower
-                        if (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3)
+                        if (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 || thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3R)
                             if (thisShimmer.SamplingRate <= 125)
                                 thisShimmer.setexgrate(0,1);               % set data rate to 125Hz for SENSOR_EXG1
                                 thisShimmer.setexgrate(0,2);               % set data rate to 125Hz for SENSOR_EXG2
@@ -2230,7 +2231,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             if (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 && thisShimmer.FirmwareCompatibilityCode < 3)
                 fprintf('Warning: setexgrate - Command is not supported for this firmware version, please update firmware.\n');
                 isSet = false;
-            elseif (strcmp(thisShimmer.State,'Connected') && thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3)                     % Shimmer must be in a Connected state
+            elseif (strcmp(thisShimmer.State,'Connected') && (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 || thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3R))                     % Shimmer must be in a Connected state
                 
                 isWritten = writeexgrate(thisShimmer, exgRate, chipIdentifier); % Write exgRate to the Shimmer
                 
@@ -6687,7 +6688,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         
                     case({'ECG', 'ECG 24BIT'})
                         if (strcmp(thisShimmer.InternalBoard,'ECG') || strcmp(thisShimmer.InternalBoard,'EXG'))
-                            if (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3)
+                            if (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 || thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3R)
                                 enabledSensors = bitset(uint32(enabledSensors), thisShimmer.SENSOR_EXG1_24BIT, enableBit);     % set the SENSOR_EXG1_24BIT enabled setting to the value in enable bit 
                                 enabledSensors = bitset(uint32(enabledSensors), thisShimmer.SENSOR_EXG2_24BIT, enableBit);     % set the SENSOR_EXG2_24BIT enabled setting to the value in enable bit 
                                 if ( enableBit == 1)
@@ -6721,7 +6722,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         
                     case({'EMG', 'EMG 24BIT'})  
                         if (strcmp(thisShimmer.InternalBoard,'EMG') || strcmp(thisShimmer.InternalBoard,'EXG'))
-                            if (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3)
+                            if (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 || thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3R)
                                 enabledSensors = bitset(uint32(enabledSensors), thisShimmer.SENSOR_EXG1_24BIT, enableBit);     % set the SENSOR_EXG1_24BIT enabled setting to the value in enable bit 
                                 if ( enableBit == 1)
                                     enabledSensors = bitset(uint32(enabledSensors), thisShimmer.SENSOR_EXG2_24BIT, 0);         % disable SENSOR_EXG2_24BIT 
@@ -6754,7 +6755,8 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         end
                         
                     case('ECG 16BIT') 
-                        if ((strcmp(thisShimmer.InternalBoard,'ECG') || strcmp(thisShimmer.InternalBoard,'EXG')) && thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3)
+                        if ((strcmp(thisShimmer.InternalBoard,'ECG') || strcmp(thisShimmer.InternalBoard,'EXG')) && ...
+                                (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 || thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3R))
                             enabledSensors = bitset(uint32(enabledSensors), thisShimmer.SENSOR_EXG1_16BIT, enableBit);        % set the SENSOR_EXG1_16BIT enabled setting to the value in enable bit 
                             enabledSensors = bitset(uint32(enabledSensors), thisShimmer.SENSOR_EXG2_16BIT, enableBit);        % set the SENSOR_EXG2_16BIT enabled setting to the value in enable bit 
                             if ( enableBit == 1)
@@ -6778,7 +6780,8 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         end
                     
                     case('EMG 16BIT') 
-                        if ((strcmp(thisShimmer.InternalBoard,'EMG') || strcmp(thisShimmer.InternalBoard,'EXG')) && thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3)
+                        if ((strcmp(thisShimmer.InternalBoard,'EMG') || strcmp(thisShimmer.InternalBoard,'EXG')) && ...
+                                (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 || thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3R))
                             enabledSensors = bitset(uint32(enabledSensors), thisShimmer.SENSOR_EXG1_16BIT, enableBit);        % set the SENSOR_EXG1_16BIT enabled setting to the value in enable bit 
                             if ( enableBit == 1)
                                 enabledSensors = bitset(uint32(enabledSensors), thisShimmer.SENSOR_EXG2_16BIT, 0);            % disable SENSOR_EXG2_16BIT
@@ -7310,12 +7313,12 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 writetocomport(thisShimmer, thisShimmer.SET_SENSORS_COMMAND);       % Send the Set Sensors Command to the Shimmer
                 writetocomport(thisShimmer, char(enabledSensorsLowByte));           % Write the enabled sensors lower byte value to the Shimmer
                 writetocomport(thisShimmer, char(enabledSensorsHighByte));          % Write the enabled sensors higher byte value to the Shimmer
-                if (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3)
+                if (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 || thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3R)
                     enabledSensorsHigherByte = bitand(bitshift(enabledSensors,-16),255);   % Extract the higher byte
                     writetocomport(thisShimmer, char(enabledSensorsHigherByte));           % Write the enabled sensors higher byte value to the Shimmer
                 end
                 isWritten = waitforack(thisShimmer, 8);                             % Wait for Acknowledgment from Shimmer
-                if (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3)
+                if (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3|| thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3R)
                   inquiry(thisShimmer);                                             % get inquiry response of the Shimmer
                 end
                 if (isWritten == false)
@@ -7358,7 +7361,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                     if ~isempty(shimmerResponse)
                         
                         if (shimmerResponse(1) == thisShimmer.SAMPLING_RATE_RESPONSE)
-                            if (thisShimmer.ShimmerVersion ~= thisShimmer.SHIMMER_3)
+                            if (thisShimmer.ShimmerVersion ~= thisShimmer.SHIMMER_3 || thisShimmer.ShimmerVersion ~= thisShimmer.SHIMMER_3R)
                                 if shimmerResponse(2) == 255                                % samplingRate == 0 is a special case, refer to 'Sampling Rate Table.txt' for more details
                                     thisShimmer.SamplingRate = 0;
                                 else
@@ -7481,6 +7484,8 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                                     thisShimmer.FirmwareCompatibilityCode = 4;
                                 elseif(thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 && thisShimmer.FirmwareMajorVersion == 0 && thisShimmer.FirmwareMinorVersion >= 3)
                                     thisShimmer.FirmwareCompatibilityCode = 5;
+                                elseif(thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3R)
+                                    thisShimmer.FirmwareCompatibilityCode = 6;
                                 else
                                     thisShimmer.FirmwareCompatibilityCode = 0;
                                 end
@@ -8119,7 +8124,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
             if(thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 && thisShimmer.FirmwareCompatibilityCode < 3)
                 disp('Warning: readexgconfiguration - Command not supported for this firmware version, please update firmware.')
                 isRead = false;
-            elseif (strcmp(thisShimmer.State,'Connected') && thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 && (chipIdentifier == 1 || chipIdentifier == 2))
+            elseif (strcmp(thisShimmer.State,'Connected') && (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3 || thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3R) && (chipIdentifier == 1 || chipIdentifier == 2))
                 
                 clearreaddatabuffer(thisShimmer);                                          % As a precaution always clear the read data buffer before a write
                 writetocomport(thisShimmer, thisShimmer.GET_EXG_REGS_COMMAND);
@@ -9367,6 +9372,85 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                 thisShimmer.GsrRange = bitand(bitshift(thisShimmer.ConfigByte3,-1),7);
                 thisShimmer.PressureResolution = bitand(bitshift(thisShimmer.ConfigByte3,-4),3);
                 interpretdatapacketformat(thisShimmer,signalIDArray);      
+            elseif (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3R)
+                %===========================
+                %   SAMPLING RATE
+                %===========================
+                adcLSB = uint16(inquiryResponse(3));
+                adcMSB = uint16(inquiryResponse(4));
+                ADCRawSamplingRateValue = bitor(adcLSB, bitshift(adcMSB, 8));
+                thisShimmer.SamplingRate = 32768.0 / double(ADCRawSamplingRateValue);
+            
+                %===========================
+                %   CONFIG BYTE 0..5 (48 bits)
+                %===========================
+                % C#: packet[2]..packet[8] → MATLAB: inquiryResponse(4..10)
+                configBytes = uint64(0);
+                shift = uint64(0);
+                for i = 4:10
+                    configBytes = bitor(configBytes, bitshift(uint64(inquiryResponse(i)), shift));
+                    shift = shift + 8;
+                end
+            
+                %===========================
+                %   FIELD EXTRACTION (matches C#)
+                %===========================
+                thisShimmer.AccelWideRangeHRMode     = bitand(bitshift(configBytes,-0), 1);
+                thisShimmer.AccelWideRangeLPMode     = bitand(bitshift(configBytes,-1), 1);
+            
+                thisShimmer.AccelRange               = bitand(bitshift(configBytes,-2), 3);
+                thisShimmer.GyroRange                = bitand(bitshift(configBytes,-16), 3);
+            
+                % Add MSB GYRO RANGE (bit 34)
+                MSB_Gyro_Range                       = bitand(bitshift(configBytes,-34), 1);
+                thisShimmer.GyroRange                = thisShimmer.GyroRange + bitshift(MSB_Gyro_Range, 2);
+            
+                % Alt magnetometer settings
+                thisShimmer.MagRange                 = bitand(bitshift(configBytes,-21), 7);
+            
+                thisShimmer.AccelWideRangeDataRate   = bitand(bitshift(configBytes,-4), 15);
+                thisShimmer.GyroRate                 = bitand(bitshift(configBytes,-8), 255);
+                thisShimmer.MagRate                  = bitand(bitshift(configBytes,-18), 7);
+            
+                thisShimmer.InternalExpPower         = bitand(bitshift(configBytes,-24), 1);
+                thisShimmer.GsrRange                 = bitand(bitshift(configBytes,-25), 7);
+            
+                thisShimmer.PressureResolution       = bitand(bitshift(configBytes,-28), 3);
+                MSB_PRESSURE_RES                     = bitand(bitshift(configBytes,-32), 1);
+                thisShimmer.PressureResolution       = thisShimmer.PressureResolution + bitshift(MSB_PRESSURE_RES, 2);
+            
+                %thisShimmer.Mpu9150AccelRange        = bitand(bitshift(configBytes,-30), 3);
+            
+                % LP Accel MSB (bit 33)
+                MSB_LP_MODE                          = bitand(bitshift(configBytes,-33), 1);
+                thisShimmer.AccelWideRangeLPMode     = thisShimmer.AccelWideRangeLPMode + bitshift(MSB_LP_MODE, 1);
+            
+                % LN Accel Range
+                %thisShimmer.LNAccelRange             = bitand(bitshift(configBytes,-30), 3);
+            
+                % Alt sampling rates  
+                %thisShimmer.AltAccelSamplingRate     = bitand(bitshift(configBytes,-38), 3);
+                %thisShimmer.AltMagSamplingRate       = bitand(bitshift(configBytes,-40), 63);
+            
+                %===========================
+                %   CHANNELS / BUFFER SIZE
+                %   C#: packet[9], packet[10]
+                %===========================
+                nChannels = inquiryResponse(11);
+                thisShimmer.BufferSize = inquiryResponse(12);
+            
+                %===========================
+                %   CHANNEL IDS
+                %===========================
+                startIndex = 13;
+                endIndex = startIndex + nChannels - 1;
+                signalIDArray = inquiryResponse(startIndex:endIndex);
+            
+                %===========================
+                %   DATA FORMAT PARSER
+                %===========================
+                interpretdatapacketformat(thisShimmer, signalIDArray);
+
             else
                 thisShimmer.SamplingRate = 1024.0 / double(inquiryResponse(2));
                 thisShimmer.AccelRange = inquiryResponse(3);
@@ -9542,6 +9626,216 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
                         case ('C')
                             signalNameArray(i+1) = cellstr('Gyroscope Z');
                             signalDataTypeArray(i+1) = cellstr('i16*');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('40'));
+                        case ('D')
+                            signalNameArray(i+1) = cellstr('External ADC A7');
+                            signalDataTypeArray(i+1) = cellstr('u12');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('2'));
+                        case ('E')
+                            signalNameArray(i+1) = cellstr('External ADC A6');
+                            signalDataTypeArray(i+1) = cellstr('u12');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('1'));
+                        case ('F')
+                            signalNameArray(i+1) = cellstr('External ADC A15');
+                            signalDataTypeArray(i+1) = cellstr('u12');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('800'));
+                        case ('10')
+                            signalNameArray(i+1) = cellstr('Internal ADC A1');
+                            signalDataTypeArray(i+1) = cellstr('u12');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('400'));
+                        case ('11')
+                            signalNameArray(i+1) = cellstr('Internal ADC A12');
+                            signalDataTypeArray(i+1) = cellstr('u12');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('200'));
+                        case ('12')
+                            signalNameArray(i+1) = cellstr('Internal ADC A13');
+                            signalDataTypeArray(i+1) = cellstr('u12');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('100'));
+                        case ('13')
+                            signalNameArray(i+1) = cellstr('Internal ADC A14');
+                            signalDataTypeArray(i+1) = cellstr('u12');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('800000'));
+                        case ('14')
+                            signalNameArray(i+1) = cellstr('Alternative Accelerometer X');
+                            signalDataTypeArray(i+1) = cellstr('i16');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('400000'));
+                        case ('15')
+                            signalNameArray(i+1) = cellstr('Alternative Accelerometer Y');
+                            signalDataTypeArray(i+1) = cellstr('i16');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('400000'));
+                        case ('16')
+                            signalNameArray(i+1) = cellstr('Alternative Accelerometer Z');
+                            signalDataTypeArray(i+1) = cellstr('i16');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('400000'));
+                        case ('17')
+                            signalNameArray(i+1) = cellstr('Alternative Magnetometer X');
+                            signalDataTypeArray(i+1) = cellstr('i16');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('200000'));
+                        case ('18')
+                            signalNameArray(i+1) = cellstr('Alternative Magnetometer Y');
+                            signalDataTypeArray(i+1) = cellstr('i16');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('200000'));
+                        case ('19')
+                            signalNameArray(i+1) = cellstr('Alternative Magnetometer Z');
+                            signalDataTypeArray(i+1) = cellstr('i16');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('200000'));
+                        case ('1A')
+                            signalNameArray(i+1) = cellstr('Temperature');
+                            signalDataTypeArray(i+1) = cellstr('u16*');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('40000'));
+                        case ('1B')
+                            signalNameArray(i+1) = cellstr('Pressure');
+                            signalDataTypeArray(i+1) = cellstr('u24*');
+                            nBytesDataPacket=nBytesDataPacket+3;
+                            enabledSensors = bitor(enabledSensors,hex2dec('40000'));
+                        case ('1C')
+                            signalNameArray(i+1) = cellstr('GSR Raw');
+                            signalDataTypeArray(i+1) = cellstr('u16');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('04'));
+                        case ('1D')
+                            signalNameArray(i+1) = cellstr('EXG1 STA');
+                            signalDataTypeArray(i+1) = cellstr('u8');
+                            nBytesDataPacket=nBytesDataPacket+1;
+                        case ('1E')
+                            signalNameArray(i+1) = cellstr('EXG1 CH1');
+                            signalDataTypeArray(i+1) = cellstr('i24*');
+                            nBytesDataPacket=nBytesDataPacket+3;
+                            enabledSensors = bitor(enabledSensors,hex2dec('10'));
+                        case ('1F')
+                            signalNameArray(i+1) = cellstr('EXG1 CH2');
+                            signalDataTypeArray(i+1) = cellstr('i24*');
+                            nBytesDataPacket=nBytesDataPacket+3;
+                            enabledSensors = bitor(enabledSensors,hex2dec('10'));
+                        case ('20')
+                            signalNameArray(i+1) = cellstr('EXG2 STA');
+                            signalDataTypeArray(i+1) = cellstr('u8');
+                            nBytesDataPacket=nBytesDataPacket+1;
+                        case ('21')
+                            signalNameArray(i+1) = cellstr('EXG2 CH1'); 
+                            signalDataTypeArray(i+1) = cellstr('i24*');
+                            nBytesDataPacket=nBytesDataPacket+3;
+                            enabledSensors = bitor(enabledSensors,hex2dec('08'));
+                        case ('22')
+                            signalNameArray(i+1) = cellstr('EXG2 CH2');
+                            signalDataTypeArray(i+1) = cellstr('i24*');
+                            nBytesDataPacket=nBytesDataPacket+3;
+                            enabledSensors = bitor(enabledSensors,hex2dec('08'));
+                        case ('23')
+                            signalNameArray(i+1) = cellstr('EXG1 CH1 16BIT');
+                            signalDataTypeArray(i+1) = cellstr('i16*');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('100000'));
+                        case ('24')
+                            signalNameArray(i+1) = cellstr('EXG1 CH2 16BIT');
+                            signalDataTypeArray(i+1) = cellstr('i16*');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('100000'));
+                        case ('25')
+                            signalNameArray(i+1) = cellstr('EXG2 CH1 16BIT');
+                            signalDataTypeArray(i+1) = cellstr('i16*');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('080000'));
+                        case ('26')
+                            signalNameArray(i+1) = cellstr('EXG2 CH2 16BIT');
+                            signalDataTypeArray(i+1) = cellstr('i16*');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('080000'));
+                        case ('27')
+                            signalNameArray(i+1) = cellstr('Bridge Amplifier High');
+                            signalDataTypeArray(i+1) = cellstr('u12');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('8000'));
+                        case ('28')
+                            signalNameArray(i+1) = cellstr('Bridge Amplifier Low');
+                            signalDataTypeArray(i+1) = cellstr('u12');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('8000'));
+                        otherwise
+                            signalNameArray(i+1) = cellstr(hexSignalID);       % Default values for unrecognised data signal
+                            signalDataTypeArray(i+1) = cellstr('u12');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                    end
+                elseif (thisShimmer.ShimmerVersion==thisShimmer.SHIMMER_3R)
+                    switch hexSignalID
+                        case ('0')
+                            signalNameArray(i+1) = cellstr('Low Noise Accelerometer X');
+                            signalDataTypeArray(i+1) = cellstr('i16');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('80'));
+                        case ('1')
+                            signalNameArray(i+1) = cellstr('Low Noise Accelerometer Y');
+                            signalDataTypeArray(i+1) = cellstr('i16');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('80'));
+                        case ('2')
+                            signalNameArray(i+1) = cellstr('Low Noise Accelerometer Z');
+                            signalDataTypeArray(i+1) = cellstr('i16');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('80'));
+                        case ('3')
+                            signalNameArray(i+1) = cellstr('Battery Voltage');
+                            signalDataTypeArray(i+1) = cellstr('u12');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('2000'));
+                        case ('4')
+                            signalNameArray(i+1) = cellstr('Wide Range Accelerometer X');
+                            signalDataTypeArray(i+1) = cellstr('i16');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('1000'));
+                        case ('5')
+                            signalNameArray(i+1) = cellstr('Wide Range Accelerometer Y');
+                            signalDataTypeArray(i+1) = cellstr('i16');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('1000'));
+                        case ('6')
+                            signalNameArray(i+1) = cellstr('Wide Range Accelerometer Z');
+                            signalDataTypeArray(i+1) = cellstr('i16');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('1000'));
+                        case ('7')
+                            signalNameArray(i+1) = cellstr('Magnetometer X');
+                            signalDataTypeArray(i+1) = cellstr('i16');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('20'));
+                        case ('8')
+                            signalNameArray(i+1) = cellstr('Magnetometer Y');
+                            signalDataTypeArray(i+1) = cellstr('i16');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('20'));
+                        case ('9')
+                            signalNameArray(i+1) = cellstr('Magnetometer Z');
+                            signalDataTypeArray(i+1) = cellstr('i16');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('20'));
+                        case ('A')
+                            signalNameArray(i+1) = cellstr('Gyroscope X');
+                            signalDataTypeArray(i+1) = cellstr('i16');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('40'));
+                        case ('B')
+                            signalNameArray(i+1) = cellstr('Gyroscope Y');
+                            signalDataTypeArray(i+1) = cellstr('i16');
+                            nBytesDataPacket=nBytesDataPacket+2;
+                            enabledSensors = bitor(enabledSensors,hex2dec('40'));
+                        case ('C')
+                            signalNameArray(i+1) = cellstr('Gyroscope Z');
+                            signalDataTypeArray(i+1) = cellstr('i16');
                             nBytesDataPacket=nBytesDataPacket+2;
                             enabledSensors = bitor(enabledSensors,hex2dec('40'));
                         case ('D')
@@ -9955,7 +10249,7 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
         
         function [accelData,signalName,signalFormat,signalUnit] = getlownoiseacceldata(thisShimmer, dataMode, parsedData)
              % Get low noise accelerometer data from input parsedData.
-            if (strcmp(thisShimmer.State,'Streaming') && thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3) % Shimmer must be in a Shimmer3 in Streaming state
+            if (strcmp(thisShimmer.State,'Streaming') && (thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3||thisShimmer.ShimmerVersion == thisShimmer.SHIMMER_3R)) % Shimmer must be in a Shimmer3 in Streaming state
                 
                 iAccelXShimmer = thisShimmer.getsignalindex('Low Noise Accelerometer X');            % Determine the column index of the Accelerometer X-axis signal
                 iAccelYShimmer = thisShimmer.getsignalindex('Low Noise Accelerometer Y');            % Determine the column index of the Accelerometer Y-axis signal
@@ -12366,6 +12660,3 @@ classdef ShimmerHandleClass < handle   % Inherit from super class 'handle'
     end %methods (Access = 'private')
     
 end %classdef shimmer
-
-
-
