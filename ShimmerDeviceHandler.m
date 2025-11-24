@@ -1,9 +1,15 @@
-classdef ShimmerDeviceHandler
+classdef ShimmerDeviceHandler < handle
+    events
+        DeviceConnected
+        DeviceDisconnected
+        DeviceConnectionLost
+    end
     properties
         obj
         bluetoothManager
         sensorClass
         orientationObj
+        cleanupHandle
     end
     
     methods
@@ -46,6 +52,10 @@ classdef ShimmerDeviceHandler
             this.sensorClass = javaObjectEDT('com.shimmerresearch.driver.Configuration$Shimmer3$SENSOR_ID');
             this.obj = com.shimmerresearch.tools.matlab.ShimmerJavaClass();
             this.bluetoothManager = this.obj.mBluetoothManager;
+            javaHandle = handle(this.obj, 'callbackproperties');
+            javaHandle.PropertyChangeCallback = @(src,evt)this.handleJavaEvent(evt);
+
+
         end
         
         function quaternions = orientationModule(this, receivedData, dofMode)
@@ -98,6 +108,36 @@ classdef ShimmerDeviceHandler
                 end
             end
         end
+
+      function handleJavaEvent(this, evt)
+            try
+                eventName = char(evt.getNewValue());    % Direct JavaBean call
+            catch ME
+                disp("Error extracting Java event:");
+                disp(ME.message);
+                disp(evt);
+                return;
+            end
+        
+            switch eventName
+                case 'CONNECTED'
+                    fprintf("MATLAB: Device connected\n");
+                    notify(this, 'DeviceConnected');
+        
+                case 'DISCONNECTED'
+                    fprintf("MATLAB: Device disconnected\n");
+                    notify(this, 'DeviceDisconnected');
+        
+                case 'CONNECTION_LOST'
+                    fprintf("MATLAB: Connection lost\n");
+                    notify(this, 'DeviceConnectionLost');
+        
+                otherwise
+                    fprintf("MATLAB: Unknown event: %s\n", eventName);
+            end
+        end
+
+
     end
 end
         
