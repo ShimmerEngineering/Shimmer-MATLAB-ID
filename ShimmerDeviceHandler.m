@@ -51,6 +51,7 @@ classdef ShimmerDeviceHandler < handle
 
             this.sensorClass = javaObjectEDT('com.shimmerresearch.driver.Configuration$Shimmer3$SENSOR_ID');
             this.obj = com.shimmerresearch.tools.matlab.ShimmerJavaClass();
+            this.obj.setDebugMode(false);
             this.bluetoothManager = this.obj.mBluetoothManager;
             javaHandle = handle(this.obj, 'callbackproperties');
             javaHandle.PropertyChangeCallback = @(src,evt)this.handleJavaEvent(evt);

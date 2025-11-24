@@ -36,7 +36,7 @@ numSamples = 0;
 addpath('./Resources/')                                                    % directory containing supporting functions
 
 %%
-
+deviceHandler.bluetoothManager.setVerbose(false);
 deviceHandler.bluetoothManager.connectShimmerThroughCommPort(comPort);
 cleaner = onCleanup(@() deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).disconnect());  % Ensure disconnection on cleanup
 addlistener(deviceHandler, 'DeviceConnected', @(src,evt) onConnected(src, evt, comPort));
@@ -172,7 +172,7 @@ deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).disconnect()
 
     function onConnected(deviceHandler, evt, comPort)
         disp("Script: Connected");
-        if (configured==1)
+        if (configured==1) % a connected state is also triggered after configuring, so this differentiates the two
             deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).startStreaming();
             return
         end
