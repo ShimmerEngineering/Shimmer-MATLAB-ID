@@ -1,4 +1,4 @@
-function void = ppgtoheartrateexample(comPort, captureDuration, fileName) 
+function void = ppgtoheartrateexample(comPort, captureDuration, fileName)
 %PPGTOHEARTRATEEXAMPLE - Heart Rate from Photo Plethysmograph signal
 %
 %  PPGTOHEARTRATEEXAMPLE(COMPORT, CAPTUREDURATION, FILENAME)
@@ -24,7 +24,7 @@ function void = ppgtoheartrateexample(comPort, captureDuration, fileName)
 %
 %  See also plotandwriteexample ShimmerDeviceHandler
 %
-% NOTE: To use the Java Shimmer Biophysical Processing Library in   
+% NOTE: To use the Java Shimmer Biophysical Processing Library in
 % conjunction with the MATLAB ID:
 % Save the ShimmerBiophysicalProcessingLibrary_Rev_X_Y.jar file to
 % C:\Program\Files\MATLAB\R2013b\java\jar (or the equivalent) on your PC and
@@ -36,14 +36,15 @@ function void = ppgtoheartrateexample(comPort, captureDuration, fileName)
 %
 % NOTE: In this example the PPG data is pre-filtered using a second order
 % Chebyshev LPF with corner freq 5Hz by using FilterClass.m
-% 
+%
 % NOTE: If heartRate < 30 or heartRate > 215 or standard deviation of last
 % X interbeat intervals > 100 (X = numberOfBeatsToAve) then -1 is returned.
 
 %% definitions
 deviceHandler = ShimmerDeviceHandler();                                   % Define a handler
-
-fs = 204.8;                                                                % sample rate in [Hz] 
+configured = 0;
+ppgsignalname = ['PPG_A13'];
+fs = 204.8;                                                                % sample rate in [Hz]
 firsttime = true;
 
 % Note: these constants are only relevant to this examplescript and are not used
@@ -53,7 +54,7 @@ DELAY_PERIOD = 0.2;                                                        % A d
 numSamples = 0;
 
 %% filter settings
-fclp = 5;                                                                  % corner frequency lowpassfilter [Hz]; 
+fclp = 5;                                                                  % corner frequency lowpassfilter [Hz];
 lpfPPG = com.shimmerresearch.algorithms.Filter(com.shimmerresearch.algorithms.Filter.LOW_PASS,fs,fclp);
 %% PPG2HR settings
 numberOfBeatsToAve = 1;                                                    % the number of consecutive heart beats that are averaged to calculate the heart rate. Instantaneous heart rate is calculated after each detected pulse. So the last X instantaneous heart rates are averaged to give the output (where X is numberOfBeatsToAve)) must be >= 1.
@@ -61,149 +62,157 @@ useLastEstimate = 1;                                                       % tru
 PPG2HR = com.shimmerresearch.biophysicalprocessing.PPGtoHRAlgorithm(fs,numberOfBeatsToAve,useLastEstimate);  % create PPG to Heart Rate object: Sampling Rate = 204.8Hz, Number of Beats to Average = 1 (minimum), Repeat last valid estimate when invalid data is detected.
 
 %%
+deviceHandler.bluetoothManager.setVerbose(false);
 deviceHandler.bluetoothManager.connectShimmerThroughCommPort(comPort);
 % Ensure disconnection happens properly even if the workspace is cleared or the script is interrupted
 cleaner = onCleanup(@() deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).disconnect());  % Ensure disconnection on cleanup
-pause(10);
+addlistener(deviceHandler, 'DeviceConnected', @(src,evt) onConnected(src, evt, comPort));
+addlistener(deviceHandler, 'DeviceDisconnected',    @(src,evt) disp("Script: Disconnected"));
+addlistener(deviceHandler, 'DeviceConnectionLost',  @(src,evt) disp("Script: Lost connection"));
 
-if deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).isConnected()
-    
-    shimmerClone = deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).deepClone();
-    shimmerClone.setSamplingRateShimmer(fs);
-    
-    shimmerClone.disableAllSensors();                                      % Disables all currently enabled sensors
-    shimmerClone.setEnabledAndDerivedSensorsAndUpdateMaps(0, 0);           % Resets configuration on enabled and derived sensors
-    
-    sensorIds = javaArray('java.lang.Integer', 1);
-    sensorIds(1) = java.lang.Integer(deviceHandler.sensorClass.HOST_PPG_A13);
-    
-    shimmerClone.setSensorIdsEnabled(sensorIds);
+plotData = [];
+timeStamp = [];
+filteredplotData = [];
+heartRate = [];
+storeData = [];
 
-    commType = javaMethod('valueOf', 'com.shimmerresearch.driver.Configuration$COMMUNICATION_TYPE', 'BLUETOOTH');
-    com.shimmerresearch.driverUtilities.AssembleShimmerConfig.generateSingleShimmerConfig(shimmerClone, commType);
-    deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).configureFromClone(shimmerClone);
-    pause(20);
-    hwid = shimmerClone.getHardwareVersionParsed();
-    ppgsignalname = ['PPG_A13'];
-    if hwid.equals('Shimmer3R')
-        ppgsignalname = ['PPG_A1'];
+h.figure1=figure('Name','Shimmer PPG and Heart Rate signals');     % create a handle to figure for plotting data from shimmer
+set(h.figure1, 'Position', [100, 500, 800, 400]);
+
+while(isempty(deviceHandler.obj.receiveData(comPort)))                                  % we wait here for the device to start streaming
+    pause(0.1);
+end
+elapsedTime = 0;                                                   % Reset to 0
+tic;
+while (elapsedTime < captureDuration)
+
+    pause(DELAY_PERIOD);                                           % pause for this period of time on each iteration to allow data to arrive in the buffer
+    data = deviceHandler.obj.receiveData(comPort);                                  % Read the latest data from shimmer data buffer, signalFormatArray defines the format of the data and signalUnitArray the unit
+    if (isempty(data))
+        continue;
     end
-    deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).startStreaming();
-    pause(20);
-    
-    plotData = [];                                               
-    timeStamp = [];
-    filteredplotData = [];
-    heartRate = [];
-    storeData = [];
+    newData = data(1);
+    signalNameArray = data(2);
 
-    h.figure1=figure('Name','Shimmer PPG and Heart Rate signals');     % create a handle to figure for plotting data from shimmer
-    set(h.figure1, 'Position', [100, 500, 800, 400]);
+    signalNameCellArray = cell(numel(signalNameArray), 1);
+    for i = 1:numel(signalNameArray)
+        signalNameCellArray{i} = char(signalNameArray(i));         % Convert each Java string to a MATLAB char array
+    end
 
-    elapsedTime = 0;                                                   % reset to 0    
-    tic;                                                               % start timer
+    if (firsttime==true && isempty(newData)~=1)
+        tab = char(9);
+        cal = 'CAL';
+        signalNamesString=[char('Time Stamp'), char(9), char('PPG'), char(9), char('PPG Filtered'), char(9), char('Heart Rate')]; % create a single string, signalNamesString
+        signalFormatsString =[cal, tab, cal, tab, cal, tab, cal, tab];
+        signalUnitsString = ['milliseconds',tab,'mV',tab,'mV',tab,'BPM'];
 
-    while (elapsedTime < captureDuration)            
+        % write headers to file
+        headerLines = {signalNamesString; signalFormatsString; signalUnitsString};
+        fid = fopen(fileName, 'wt');
+        for l = 1:numel(headerLines)
+            fprintf(fid, '%s\n',headerLines{l});
+        end
+        fclose(fid);
+    end
 
-        pause(DELAY_PERIOD);                                           % pause for this period of time on each iteration to allow data to arrive in the buffer
-        data = deviceHandler.obj.receiveData(comPort);                                  % Read the latest data from shimmer data buffer, signalFormatArray defines the format of the data and signalUnitArray the unit
-        if (isempty(data))
-            continue;
-        end 
-        newData = data(1);
-        signalNameArray = data(2);
 
-        signalNameCellArray = cell(numel(signalNameArray), 1);     
-        for i = 1:numel(signalNameArray)
-            signalNameCellArray{i} = char(signalNameArray(i));         % Convert each Java string to a MATLAB char array
+    if ~isempty(newData)                                           % TRUE if new data has arrived
+
+        % get signal indices
+        chIndex(1) = find(ismember(signalNameCellArray, 'Timestamp'));
+        chIndex(2) = find(ismember(signalNameCellArray, ppgsignalname));   % PPG data output
+        PPGData = newData(:,chIndex(2));
+        PPGDataFiltered = PPGData;
+        for i = 1:length(PPGDataFiltered)
+            PPGDataFiltered(i) = lpfPPG.filterData(PPGDataFiltered(i));      % filter with low pass filter
         end
 
-        if (firsttime==true && isempty(newData)~=1)
-            tab = char(9);
-            cal = 'CAL';
-            signalNamesString=[char('Time Stamp'), char(9), char('PPG'), char(9), char('PPG Filtered'), char(9), char('Heart Rate')]; % create a single string, signalNamesString
-            signalFormatsString =[cal, tab, cal, tab, cal, tab, cal, tab];
-            signalUnitsString = ['milliseconds',tab,'mV',tab,'mV',tab,'BPM'];
+        newheartRate = PPG2HR.ppgToHrConversion(PPGDataFiltered, newData(:,chIndex(1)));                   % compute Heart Rate from PPG data
 
-            % write headers to file
-            headerLines = {signalNamesString; signalFormatsString; signalUnitsString};
-            fid = fopen(fileName, 'wt');
-            for l = 1:numel(headerLines)
-                fprintf(fid, '%s\n',headerLines{l});
-            end
-            fclose(fid);
-        end
+        plotData = [plotData; PPGData];                            % update the plotDataBuffer with the new PPG data
+        filteredplotData = [filteredplotData; PPGDataFiltered];    % update the filteredplotData buffer with the new filtered PPG data
+        heartRate = [heartRate; newheartRate];                     % update the filteredHRData buffer with the new filtered Heart Rate data
+        numPlotSamples = size(plotData,1);
+        numSamples = numSamples + size(newData,1);
+        timeStampNew = newData(:,chIndex(1));                      % get timestamps
+        timeStamp = [timeStamp; timeStampNew];
 
+        newstoreData = [timeStampNew PPGData PPGDataFiltered newheartRate];
+        storeData = [storeData; newstoreData];
 
-        if ~isempty(newData)                                           % TRUE if new data has arrived
-
-            % get signal indices
-            chIndex(1) = find(ismember(signalNameCellArray, 'Timestamp'));
-            chIndex(2) = find(ismember(signalNameCellArray, ppgsignalname));   % PPG data output             
-            PPGData = newData(:,chIndex(2));
-            PPGDataFiltered = PPGData;
-            for i = 1:length(PPGDataFiltered)
-                PPGDataFiltered(i) = lpfPPG.filterData(PPGDataFiltered(i));      % filter with low pass filter   
-            end
-            
-            newheartRate = PPG2HR.ppgToHrConversion(PPGDataFiltered, newData(:,chIndex(1)));                   % compute Heart Rate from PPG data
-
-            plotData = [plotData; PPGData];                            % update the plotDataBuffer with the new PPG data
-            filteredplotData = [filteredplotData; PPGDataFiltered];    % update the filteredplotData buffer with the new filtered PPG data
-            heartRate = [heartRate; newheartRate];                     % update the filteredHRData buffer with the new filtered Heart Rate data
-            numPlotSamples = size(plotData,1);                          
-            numSamples = numSamples + size(newData,1);
-            timeStampNew = newData(:,chIndex(1));                      % get timestamps
-            timeStamp = [timeStamp; timeStampNew];
-
-            newstoreData = [timeStampNew PPGData PPGDataFiltered newheartRate];
-            storeData = [storeData; newstoreData];
-
-            dlmwrite(fileName, storeData, '-append', 'delimiter', '\t','precision',16);                % append the new data to the file in a tab delimited format
+        dlmwrite(fileName, storeData, '-append', 'delimiter', '\t','precision',16);                % append the new data to the file in a tab delimited format
 
 
-             if numSamples > NO_SAMPLES_IN_PLOT
+        if numSamples > NO_SAMPLES_IN_PLOT
 
-                    plotData = plotData(numPlotSamples-NO_SAMPLES_IN_PLOT+1:end,:);
-                    filteredplotData = filteredplotData(numPlotSamples-NO_SAMPLES_IN_PLOT+1:end,:);
-                    heartRate = heartRate(numPlotSamples-NO_SAMPLES_IN_PLOT+1:end,:);
-
-             end
-             sampleNumber = max(numSamples-NO_SAMPLES_IN_PLOT+1,1):numSamples;
-
-
-            % plotting the data
-            set(0,'CurrentFigure',h.figure1);         
-            subplot(3,1,1)
-            plot(sampleNumber, plotData(:,1));                         % plot the PPG data
-            legend('PPG (mV)'); 
-            xlim([sampleNumber(1) sampleNumber(end)]);
-            ylim('auto');                                          
-
-            subplot(3,1,2)
-            plot(sampleNumber, filteredplotData(:,1));                 % plot the filtered PPG data
-            legend('Filtered PPG (mV)'); 
-            xlim([sampleNumber(1) sampleNumber(end)]);
-            ylim('auto');                                          
-
-            subplot(3,1,3)
-            plot(sampleNumber, heartRate);                             % plot the Heart Rate data
-            legend('Heart Rate (BPM');   
-            xlim([sampleNumber(1) sampleNumber(end)]);
-            ylim('auto');           
+            plotData = plotData(numPlotSamples-NO_SAMPLES_IN_PLOT+1:end,:);
+            filteredplotData = filteredplotData(numPlotSamples-NO_SAMPLES_IN_PLOT+1:end,:);
+            heartRate = heartRate(numPlotSamples-NO_SAMPLES_IN_PLOT+1:end,:);
 
         end
+        sampleNumber = max(numSamples-NO_SAMPLES_IN_PLOT+1,1):numSamples;
 
-        elapsedTime = elapsedTime + toc;                               % stop timer and add to elapsed time
-        tic;                                                           % start timer           
 
-    end  
+        % plotting the data
+        set(0,'CurrentFigure',h.figure1);
+        subplot(3,1,1)
+        plot(sampleNumber, plotData(:,1));                         % plot the PPG data
+        legend('PPG (mV)');
+        xlim([sampleNumber(1) sampleNumber(end)]);
+        ylim('auto');
 
-    elapsedTime = elapsedTime + toc;                                   % stop timer
-    fprintf('The percentage of received packets: %d \n',deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).getPacketReceptionRateCurrent()); % Detect loss packets
-    deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).stopStreaming();                                                      % stop data streaming
+        subplot(3,1,2)
+        plot(sampleNumber, filteredplotData(:,1));                 % plot the filtered PPG data
+        legend('Filtered PPG (mV)');
+        xlim([sampleNumber(1) sampleNumber(end)]);
+        ylim('auto');
 
-    deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).disconnect();     
+        subplot(3,1,3)
+        plot(sampleNumber, heartRate);                             % plot the Heart Rate data
+        legend('Heart Rate (BPM');
+        xlim([sampleNumber(1) sampleNumber(end)]);
+        ylim('auto');
+
+    end
+
+    elapsedTime = elapsedTime + toc;                               % stop timer and add to elapsed time
+    tic;                                                           % start timer
 
 end
+
+elapsedTime = elapsedTime + toc;                                   % stop timer
+fprintf('The percentage of received packets: %d \n',deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).getPacketReceptionRateCurrent()); % Detect loss packets
+deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).stopStreaming();                                                      % stop data streaming
+
+deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).disconnect();
+    function onConnected(deviceHandler, evt, comPort)
+        disp("Script: Connected");
+        if (configured==1) % a connected state is also triggered after configuring, so this differentiates the two
+            deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).startStreaming();
+            return
+        end
+        shimmerClone = deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).deepClone();
+        shimmerClone.setSamplingRateShimmer(fs);
+
+        shimmerClone.disableAllSensors();                                      % Disables all currently enabled sensors
+        shimmerClone.setEnabledAndDerivedSensorsAndUpdateMaps(0, 0);           % Resets configuration on enabled and derived sensors
+
+        sensorIds = javaArray('java.lang.Integer', 1);
+        sensorIds(1) = java.lang.Integer(deviceHandler.sensorClass.HOST_PPG_A13);
+
+        shimmerClone.setSensorIdsEnabled(sensorIds);
+
+        commType = javaMethod('valueOf', 'com.shimmerresearch.driver.Configuration$COMMUNICATION_TYPE', 'BLUETOOTH');
+        com.shimmerresearch.driverUtilities.AssembleShimmerConfig.generateSingleShimmerConfig(shimmerClone, commType);
+        deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).configureFromClone(shimmerClone);
+        pause(20);
+        hwid = shimmerClone.getHardwareVersionParsed();
+        if hwid.equals('Shimmer3R')
+            ppgsignalname = ['PPG_A1'];
+        end
+
+        configured = configured + 1;
+
+    end
+
 end
