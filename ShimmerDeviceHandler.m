@@ -110,35 +110,30 @@ classdef ShimmerDeviceHandler < handle
             end
         end
 
-      function handleJavaEvent(this, evt)
+        function handleJavaEvent(this, evt)
             try
-                eventName = char(evt.getNewValue());    % Direct JavaBean call
+                eventObj = evt.getNewValue();   % this is MatlabConnectionEvent
+                state   = char(eventObj.state);
+                comPort = char(eventObj.comPort);
             catch ME
-                disp("Error extracting Java event:");
+                disp("Error extracting event data:");
                 disp(ME.message);
-                disp(evt);
                 return;
             end
         
-            switch eventName
+            switch state
                 case 'CONNECTED'
-                    fprintf("MATLAB: Device connected\n");
-                    notify(this, 'DeviceConnected');
-        
+                    fprintf("MATLAB: Device connected on %s\n", comPort);
+                    notify(this, 'DeviceConnected', ComPortEventData(comPort));
+            
                 case 'DISCONNECTED'
-                    fprintf("MATLAB: Device disconnected\n");
-                    notify(this, 'DeviceDisconnected');
-        
+                    fprintf("MATLAB: Device disconnected on %s\n", comPort);
+                    notify(this, 'DeviceDisconnected', ComPortEventData(comPort));
+            
                 case 'CONNECTION_LOST'
-                    fprintf("MATLAB: Connection lost\n");
-                    notify(this, 'DeviceConnectionLost');
-        
-                otherwise
-                    fprintf("MATLAB: Unknown event: %s\n", eventName);
+                    fprintf("MATLAB: Connection lost on %s\n", comPort);
+                    notify(this, 'DeviceConnectionLost', ComPortEventData(comPort));
             end
         end
-
-
     end
 end
-        

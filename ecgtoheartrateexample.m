@@ -78,7 +78,7 @@ deviceHandler.bluetoothManager.setVerbose(false);
 deviceHandler.bluetoothManager.connectShimmerThroughCommPort(comPort);
 % Ensure disconnection happens properly even if the workspace is cleared or the script is interrupted
 cleaner = onCleanup(@() deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).disconnect());  % Ensure disconnection on cleanup
-addlistener(deviceHandler, 'DeviceConnected', @(src,evt) onConnected(src, evt, comPort));
+addlistener(deviceHandler, 'DeviceConnected', @(src,evt) onConnected(src, evt));
 addlistener(deviceHandler, 'DeviceDisconnected',    @(src,evt) disp("Script: Disconnected"));
 addlistener(deviceHandler, 'DeviceConnectionLost',  @(src,evt) disp("Script: Lost connection"));
 
@@ -216,8 +216,10 @@ fprintf('The percentage of received packets: %d \n',deviceHandler.bluetoothManag
 deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).stopStreaming();                                                      % stop data streaming
 deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).disconnect();                                                    % disconnect from shimmer
 
-    function onConnected(deviceHandler, evt, comPort)
-        disp("Script: Connected");
+    function onConnected(deviceHandler, evt)
+        connectedPort = evt.ComPort;
+        disp("Script: Connected on " + connectedPort);
+        
         if (configured==1) % a connected state is also triggered after configuring, so this differentiates the two
             deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).startStreaming();
             return
