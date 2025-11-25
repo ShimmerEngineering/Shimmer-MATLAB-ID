@@ -80,10 +80,12 @@ uicontrol('Style', 'pushbutton', 'String', 'Reset',...
     'Position', [80 20 50 20],...
     'Callback', {@resetaxes});                                     % Pushbutton to reset the viewpoint
 
+
+while(isempty(deviceHandler.obj.receiveData(comPort)))                                  % we wait here for the device to start streaming
+    pause(0.1);
+end
 elapsedTime = 0;                                                   % Reset to 0
-
-tic;                                                               % Start timer
-
+tic;
 while (elapsedTime < captureDuration)
 
     pause(DELAY_PERIOD);                                           % Pause for this period of time on each iteration to allow data to arrive in the buffer
