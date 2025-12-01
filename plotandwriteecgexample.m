@@ -16,7 +16,7 @@ function shimmer = plotandwriteecgexample(comPort, captureDuration, fileName)
 
 %% definitions
 deviceHandler = ShimmerDeviceHandler();                                   % Define a handler
-
+configured = 0;
 fs = 512;                                                                  % sample rate in [Hz]
 firsttime = true;
 
@@ -57,203 +57,215 @@ if (BSF)
     bsfexg1ch1 = com.shimmerresearch.algorithms.Filter(com.shimmerresearch.algorithms.Filter.BAND_STOP,fs,[fm-1 fm+1]);
     bsfexg1ch2 = com.shimmerresearch.algorithms.Filter(com.shimmerresearch.algorithms.Filter.BAND_STOP,fs,[fm-1 fm+1]);
     bsfexg2ch1 = com.shimmerresearch.algorithms.Filter(com.shimmerresearch.algorithms.Filter.BAND_STOP,fs,[fm-1 fm+1]);
-    bsfexg2ch2 = com.shimmerresearch.algorithms.Filter(com.shimmerresearch.algorithms.Filter.BAND_STOP,fs,[fm-1 fm+1);
+    bsfexg2ch2 = com.shimmerresearch.algorithms.Filter(com.shimmerresearch.algorithms.Filter.BAND_STOP,fs,[fm-1 fm+1]);
 end
 
 %%
-
+deviceHandler.bluetoothManager.setVerbose(false);
 deviceHandler.bluetoothManager.connectShimmerThroughCommPort(comPort);
 % Ensure disconnection happens properly even if the workspace is cleared or the script is interrupted
 cleaner = onCleanup(@() deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).disconnect());  % Ensure disconnection on cleanup
-pause(10);
+addlistener(deviceHandler, 'DeviceConnected', @(src,evt) onConnected(src, evt));
+addlistener(deviceHandler, 'DeviceDisconnected',    @(src,evt) disp("Script: Disconnected"));
+addlistener(deviceHandler, 'DeviceConnectionLost',  @(src,evt) disp("Script: Lost connection"));
 
-if deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).isConnected()
 
-    shimmerClone = deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).deepClone();
-    shimmerClone.setSamplingRateShimmer(fs);
+plotData = [];
+timeStamp = [];
+filteredplotData = [];
 
-    shimmerClone.disableAllSensors();                                      % Disables all currently enabled sensors
-    shimmerClone.setEnabledAndDerivedSensorsAndUpdateMaps(0, 0);           % Resets configuration on enabled and derived sensors
+h.figure1=figure('Name','Shimmer ECG signals');                    % Create a handle to figure for plotting data from shimmer
+set(h.figure1, 'Position', [100, 500, 800, 400]);
+h.figure2=figure('Name','Shimmer ECG signals');                    % Create a handle to figure for plotting data from shimmer
+set(h.figure2, 'Position', [950, 500, 800, 400]);
 
-    sensorIds = javaArray('java.lang.Integer', 1);
-    sensorIds(1) = java.lang.Integer(deviceHandler.sensorClass.HOST_ECG);
 
-    shimmerClone.setSensorIdsEnabled(sensorIds);
-    shimmerClone.setConfigValueUsingConfigLabel(java.lang.Integer(deviceHandler.sensorClass.HOST_ECG),'Resolution',java.lang.Integer(1));
-    commType = javaMethod('valueOf', 'com.shimmerresearch.driver.Configuration$COMMUNICATION_TYPE', 'BLUETOOTH');
-    com.shimmerresearch.driverUtilities.AssembleShimmerConfig.generateSingleShimmerConfig(shimmerClone, commType);
-    deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).configureFromClone(shimmerClone);
-    pause(20);
-    deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).startStreaming()
 
-    plotData = [];
-    timeStamp = [];
-    filteredplotData = [];
+while(isempty(deviceHandler.obj.receiveData(comPort)))                                  % we wait here for the device to start streaming
+    pause(0.1);
+end
+elapsedTime = 0;                                                   % Reset to 0
+tic;
+while (elapsedTime < captureDuration)
 
-    h.figure1=figure('Name','Shimmer ECG signals');                    % Create a handle to figure for plotting data from shimmer
-    set(h.figure1, 'Position', [100, 500, 800, 400]);
-    h.figure2=figure('Name','Shimmer ECG signals');                    % Create a handle to figure for plotting data from shimmer
-    set(h.figure2, 'Position', [950, 500, 800, 400]);
+    pause(DELAY_PERIOD);                                           % Pause for this period of time on each iteration to allow data to arrive in the buffer
+    data = deviceHandler.obj.receiveData(comPort);                 % Read the latest data from shimmer data buffer, signalFormatArray defines the format of the data and signalUnitArray the unit
+    if (isempty(data))
+        continue;
+    end
+    newData = data(1);
+    signalNameArray = data(2);
+    signalFormatArray = data(3);
+    signalUnitArray = data(4);
 
-    elapsedTime = 0;                                                   % Reset to 0
-    tic;                                                               % Start timer
+    signalNameCellArray = cell(numel(signalNameArray), 1);
+    for i = 1:numel(signalNameArray)
+        signalNameCellArray{i} = char(signalNameArray(i));     % Convert each Java string to a MATLAB char array
+    end
 
-    while (elapsedTime < captureDuration)
+    signalFormatCellArray = cell(numel(signalFormatArray), 1);
+    for i = 1:numel(signalFormatArray)
+        signalFormatCellArray{i} = char(signalFormatArray(i));     % Convert each Java string to a MATLAB char array
+    end
 
-        pause(DELAY_PERIOD);                                           % Pause for this period of time on each iteration to allow data to arrive in the buffer
-        data = deviceHandler.obj.receiveData(comPort);                 % Read the latest data from shimmer data buffer, signalFormatArray defines the format of the data and signalUnitArray the unit
-        if (isempty(data))
-            continue;
-        end
-        newData = data(1);
-        signalNameArray = data(2);
-        signalFormatArray = data(3);
-        signalUnitArray = data(4);
+    signalUnitCellArray = cell(numel(signalUnitArray), 1);
+    for i = 1:numel(signalUnitArray)
+        signalUnitCellArray{i} = char(signalUnitArray(i));         % Convert each Java string to a MATLAB char array
+    end
 
-        signalNameCellArray = cell(numel(signalNameArray), 1);
-        for i = 1:numel(signalNameArray)
-            signalNameCellArray{i} = char(signalNameArray(i));     % Convert each Java string to a MATLAB char array
-        end
+    if(~isempty(signalNameCellArray))
+        chIndex(1) = find(ismember(signalNameCellArray, 'ECG_LL-RA_24BIT'));
+        chIndex(2) = find(ismember(signalNameCellArray, 'ECG_LA-RA_24BIT'));
+        chIndex(3) = find(ismember(signalNameCellArray, 'ECG_Vx-RL_24BIT'));
+        chIndex(4) = find(ismember(signalNameCellArray, 'ECG_LL-LA_24BIT'));
+    end
 
-        signalFormatCellArray = cell(numel(signalFormatArray), 1);
-        for i = 1:numel(signalFormatArray)
-            signalFormatCellArray{i} = char(signalFormatArray(i));     % Convert each Java string to a MATLAB char array
-        end
+    if (firsttime==true && isempty(newData)~=1)
+        firsttime = newWriteHeadersToFile(fileName,signalNameCellArray(chIndex),signalFormatCellArray(chIndex),signalUnitCellArray(chIndex));
+    end
 
-        signalUnitCellArray = cell(numel(signalUnitArray), 1);
-        for i = 1:numel(signalUnitArray)
-            signalUnitCellArray{i} = char(signalUnitArray(i));         % Convert each Java string to a MATLAB char array
-        end
+    if ~isempty(newData)                                           % TRUE if new data has arrived
 
-        if(~isempty(signalNameCellArray))
-            chIndex(1) = find(ismember(signalNameCellArray, 'ECG_LL-RA_24BIT'));
-            chIndex(2) = find(ismember(signalNameCellArray, 'ECG_LA-RA_24BIT'));
-            chIndex(3) = find(ismember(signalNameCellArray, 'ECG_Vx-RL_24BIT'));
-            chIndex(4) = find(ismember(signalNameCellArray, 'ECG_LL-LA_24BIT'));
-        end
-
-        if (firsttime==true && isempty(newData)~=1)
-            firsttime = newWriteHeadersToFile(fileName,signalNameCellArray(chIndex),signalFormatCellArray(chIndex),signalUnitCellArray(chIndex));
-        end
-
-        if ~isempty(newData)                                           % TRUE if new data has arrived
-
-            ECGData = newData(:,chIndex);
-            ECGDataFiltered = ECGData;
-            % filter the data
-            if HPF % filter newData with highpassfilter to remove DC-offset
-                for i = 1:length(ECGDataFiltered)
-                    ECGDataFiltered(i,1) = hpfexg1ch1.filterData(ECGDataFiltered(i,1));
-                    ECGDataFiltered(i,2) = hpfexg1ch2.filterData(ECGDataFiltered(i,2));
-                    ECGDataFiltered(i,3) = hpfexg2ch1.filterData(ECGDataFiltered(i,3));
-                    ECGDataFiltered(i,4) = hpfexg2ch2.filterData(ECGDataFiltered(i,4));
-                end
+        ECGData = newData(:,chIndex);
+        ECGDataFiltered = ECGData;
+        % filter the data
+        if HPF % filter newData with highpassfilter to remove DC-offset
+            for i = 1:length(ECGDataFiltered)
+                ECGDataFiltered(i,1) = hpfexg1ch1.filterData(ECGDataFiltered(i,1));
+                ECGDataFiltered(i,2) = hpfexg1ch2.filterData(ECGDataFiltered(i,2));
+                ECGDataFiltered(i,3) = hpfexg2ch1.filterData(ECGDataFiltered(i,3));
+                ECGDataFiltered(i,4) = hpfexg2ch2.filterData(ECGDataFiltered(i,4));
             end
-
-            if BSF % filter highpassfiltered data with bandstopfilter to suppress mains interference
-                for i = 1:length(ECGDataFiltered)
-                    ECGDataFiltered(i,1) = bsfexg1ch1.filterData(ECGDataFiltered(i,1));
-                    ECGDataFiltered(i,2) = bsfexg1ch2.filterData(ECGDataFiltered(i,2));
-                    ECGDataFiltered(i,3) = bsfexg2ch1.filterData(ECGDataFiltered(i,3));
-                    ECGDataFiltered(i,4) = bsfexg2ch2.filterData(ECGDataFiltered(i,4));
-                end
-            end
-
-            if LPF % filter bandstopfiltered data with lowpassfilter to avoid aliasing
-                for i = 1:length(ECGDataFiltered)
-                    ECGDataFiltered(i,1) = lpfexg1ch1.filterData(ECGDataFiltered(i,1));
-                    ECGDataFiltered(i,2) = lpfexg1ch2.filterData(ECGDataFiltered(i,2));
-                    ECGDataFiltered(i,3) = lpfexg2ch1.filterData(ECGDataFiltered(i,3));
-                    ECGDataFiltered(i,4) = lpfexg2ch2.filterData(ECGDataFiltered(i,4));
-                end
-            end
-
-            dlmwrite(fileName, double(ECGDataFiltered), '-append', 'delimiter', '\t','precision',16); % Append the new data to the file in a tab delimited format
-
-            plotData = [plotData; ECGData];                            % Update the plotData buffer with the new ECG data
-            filteredplotData = [filteredplotData; ECGDataFiltered];    % Update the filteredplotData buffer with the new filtered ECG data
-            numPlotSamples = size(plotData,1);
-            numSamples = numSamples + size(newData,1);
-            timeStampNew = newData(:,1);                                   % get timestamps
-            timeStamp = [timeStamp; timeStampNew];
-            if numSamples > NO_SAMPLES_IN_PLOT
-                plotData = plotData(numPlotSamples-NO_SAMPLES_IN_PLOT+1:end,:);
-                filteredplotData = filteredplotData(numPlotSamples-NO_SAMPLES_IN_PLOT+1:end,:);
-            end
-            sampleNumber = max(numSamples-NO_SAMPLES_IN_PLOT+1,1):numSamples;
-
-            set(0,'CurrentFigure',h.figure1);
-            subplot(2,2,1);                                        % Create subplot
-            signalIndex = chIndex(1);
-            plot(sampleNumber,plotData(:,1));                      % Plot the ecg for channel 1 of SENSOR_EXG1
-            legendName1 = [char(signalFormatArray(signalIndex)) ' ' char(signalNameArray(signalIndex)) ' (' char(signalUnitArray(signalIndex)) ')'];
-            legend(legendName1);                                   % Add legend to plot
-            xlim([sampleNumber(1) sampleNumber(end)]);
-
-            subplot(2,2,2);                                        % Create subplot
-            signalIndex = chIndex(2);
-            plot(sampleNumber,plotData(:,2));                      % Plot the ecg for channel 2 of SENSOR_EXG1
-            legendName1 = [char(signalFormatArray(signalIndex)) ' ' char(signalNameArray(signalIndex)) ' (' char(signalUnitArray(signalIndex)) ')'];
-            legend(legendName1);                                   % Add legend to plot
-            xlim([sampleNumber(1) sampleNumber(end)]);
-
-            subplot(2,2,3);                                        % Create subplot
-            signalIndex = chIndex(1);
-            plot(sampleNumber,filteredplotData(:,1));              % Plot the filtered ecg for channel 1 of SENSOR_EXG1
-            legendName1 = [char(signalFormatArray(signalIndex)) ' ' char(signalNameArray(signalIndex)) ' (' char(signalUnitArray(signalIndex)) ')'];
-            legend(legendName1);                                   % Add legend to plot
-            xlim([sampleNumber(1) sampleNumber(end)]);
-
-            subplot(2,2,4);                                        % Create subplot
-            signalIndex = chIndex(2);
-            plot(sampleNumber,filteredplotData(:,2));              % Plot the filtered ecg for channel 2 of SENSOR_EXG1
-            legendName1 = [char(signalFormatArray(signalIndex)) ' ' char(signalNameArray(signalIndex)) ' (' char(signalUnitArray(signalIndex)) ')'];
-            legend(legendName1);                                   % Add legend to plot
-            xlim([sampleNumber(1) sampleNumber(end)]);
-
-
-            set(0,'CurrentFigure',h.figure2);
-            subplot(2,2,1);                                        % Create subplot
-            signalIndex = chIndex(3);
-            plot(sampleNumber,plotData(:,3));                      % Plot the ecg for channel 1 of SENSOR_EXG1
-            legendName1 = [char(signalFormatArray(signalIndex)) ' ' char(signalNameArray(signalIndex)) ' (' char(signalUnitArray(signalIndex)) ')'];
-            legend(legendName1);                                   % Add legend to plot
-            xlim([sampleNumber(1) sampleNumber(end)]);
-
-            subplot(2,2,2);                                        % Create subplot
-            signalIndex = chIndex(4);
-            plot(sampleNumber,plotData(:,4));                      % Plot the ecg for channel 2 of SENSOR_EXG1
-            legendName1 = [char(signalFormatArray(signalIndex)) ' ' char(signalNameArray(signalIndex)) ' (' char(signalUnitArray(signalIndex)) ')'];
-            legend(legendName1);                                   % Add legend to plot
-            xlim([sampleNumber(1) sampleNumber(end)]);
-
-            subplot(2,2,3);                                        % Create subplot
-            signalIndex = chIndex(3);
-            plot(sampleNumber,filteredplotData(:,3));              % Plot the filtered ecg for channel 1 of SENSOR_EXG1
-            legendName1 = [char(signalFormatArray(signalIndex)) ' ' char(signalNameArray(signalIndex)) ' (' char(signalUnitArray(signalIndex)) ')'];
-            legend(legendName1);                                   % Add legend to plot
-            xlim([sampleNumber(1) sampleNumber(end)]);
-
-            subplot(2,2,4);                                        % Create subplot
-            signalIndex = chIndex(4);
-            plot(sampleNumber,filteredplotData(:,4));              % Plot the filtered ecg for channel 2 of SENSOR_EXG1
-            legendName1 = [char(signalFormatArray(signalIndex)) ' ' char(signalNameArray(signalIndex)) ' (' char(signalUnitArray(signalIndex)) ')'];
-            legend(legendName1);                                   % Add legend to plot
-            xlim([sampleNumber(1) sampleNumber(end)]);
-
         end
 
-        elapsedTime = elapsedTime + toc;                           % Update elapsedTime with the time that elapsed since starting the timer
-        tic;                                                       % Start timer
+        if BSF % filter highpassfiltered data with bandstopfilter to suppress mains interference
+            for i = 1:length(ECGDataFiltered)
+                ECGDataFiltered(i,1) = bsfexg1ch1.filterData(ECGDataFiltered(i,1));
+                ECGDataFiltered(i,2) = bsfexg1ch2.filterData(ECGDataFiltered(i,2));
+                ECGDataFiltered(i,3) = bsfexg2ch1.filterData(ECGDataFiltered(i,3));
+                ECGDataFiltered(i,4) = bsfexg2ch2.filterData(ECGDataFiltered(i,4));
+            end
+        end
+
+        if LPF % filter bandstopfiltered data with lowpassfilter to avoid aliasing
+            for i = 1:length(ECGDataFiltered)
+                ECGDataFiltered(i,1) = lpfexg1ch1.filterData(ECGDataFiltered(i,1));
+                ECGDataFiltered(i,2) = lpfexg1ch2.filterData(ECGDataFiltered(i,2));
+                ECGDataFiltered(i,3) = lpfexg2ch1.filterData(ECGDataFiltered(i,3));
+                ECGDataFiltered(i,4) = lpfexg2ch2.filterData(ECGDataFiltered(i,4));
+            end
+        end
+
+        dlmwrite(fileName, double(ECGDataFiltered), '-append', 'delimiter', '\t','precision',16); % Append the new data to the file in a tab delimited format
+
+        plotData = [plotData; ECGData];                            % Update the plotData buffer with the new ECG data
+        filteredplotData = [filteredplotData; ECGDataFiltered];    % Update the filteredplotData buffer with the new filtered ECG data
+        numPlotSamples = size(plotData,1);
+        numSamples = numSamples + size(newData,1);
+        timeStampNew = newData(:,1);                                   % get timestamps
+        timeStamp = [timeStamp; timeStampNew];
+        if numSamples > NO_SAMPLES_IN_PLOT
+            plotData = plotData(numPlotSamples-NO_SAMPLES_IN_PLOT+1:end,:);
+            filteredplotData = filteredplotData(numPlotSamples-NO_SAMPLES_IN_PLOT+1:end,:);
+        end
+        sampleNumber = max(numSamples-NO_SAMPLES_IN_PLOT+1,1):numSamples;
+
+        set(0,'CurrentFigure',h.figure1);
+        subplot(2,2,1);                                        % Create subplot
+        signalIndex = chIndex(1);
+        plot(sampleNumber,plotData(:,1));                      % Plot the ecg for channel 1 of SENSOR_EXG1
+        legendName1 = [char(signalFormatArray(signalIndex)) ' ' char(signalNameArray(signalIndex)) ' (' char(signalUnitArray(signalIndex)) ')'];
+        legend(legendName1);                                   % Add legend to plot
+        xlim([sampleNumber(1) sampleNumber(end)]);
+
+        subplot(2,2,2);                                        % Create subplot
+        signalIndex = chIndex(2);
+        plot(sampleNumber,plotData(:,2));                      % Plot the ecg for channel 2 of SENSOR_EXG1
+        legendName1 = [char(signalFormatArray(signalIndex)) ' ' char(signalNameArray(signalIndex)) ' (' char(signalUnitArray(signalIndex)) ')'];
+        legend(legendName1);                                   % Add legend to plot
+        xlim([sampleNumber(1) sampleNumber(end)]);
+
+        subplot(2,2,3);                                        % Create subplot
+        signalIndex = chIndex(1);
+        plot(sampleNumber,filteredplotData(:,1));              % Plot the filtered ecg for channel 1 of SENSOR_EXG1
+        legendName1 = [char(signalFormatArray(signalIndex)) ' ' char(signalNameArray(signalIndex)) ' (' char(signalUnitArray(signalIndex)) ')'];
+        legend(legendName1);                                   % Add legend to plot
+        xlim([sampleNumber(1) sampleNumber(end)]);
+
+        subplot(2,2,4);                                        % Create subplot
+        signalIndex = chIndex(2);
+        plot(sampleNumber,filteredplotData(:,2));              % Plot the filtered ecg for channel 2 of SENSOR_EXG1
+        legendName1 = [char(signalFormatArray(signalIndex)) ' ' char(signalNameArray(signalIndex)) ' (' char(signalUnitArray(signalIndex)) ')'];
+        legend(legendName1);                                   % Add legend to plot
+        xlim([sampleNumber(1) sampleNumber(end)]);
+
+
+        set(0,'CurrentFigure',h.figure2);
+        subplot(2,2,1);                                        % Create subplot
+        signalIndex = chIndex(3);
+        plot(sampleNumber,plotData(:,3));                      % Plot the ecg for channel 1 of SENSOR_EXG1
+        legendName1 = [char(signalFormatArray(signalIndex)) ' ' char(signalNameArray(signalIndex)) ' (' char(signalUnitArray(signalIndex)) ')'];
+        legend(legendName1);                                   % Add legend to plot
+        xlim([sampleNumber(1) sampleNumber(end)]);
+
+        subplot(2,2,2);                                        % Create subplot
+        signalIndex = chIndex(4);
+        plot(sampleNumber,plotData(:,4));                      % Plot the ecg for channel 2 of SENSOR_EXG1
+        legendName1 = [char(signalFormatArray(signalIndex)) ' ' char(signalNameArray(signalIndex)) ' (' char(signalUnitArray(signalIndex)) ')'];
+        legend(legendName1);                                   % Add legend to plot
+        xlim([sampleNumber(1) sampleNumber(end)]);
+
+        subplot(2,2,3);                                        % Create subplot
+        signalIndex = chIndex(3);
+        plot(sampleNumber,filteredplotData(:,3));              % Plot the filtered ecg for channel 1 of SENSOR_EXG1
+        legendName1 = [char(signalFormatArray(signalIndex)) ' ' char(signalNameArray(signalIndex)) ' (' char(signalUnitArray(signalIndex)) ')'];
+        legend(legendName1);                                   % Add legend to plot
+        xlim([sampleNumber(1) sampleNumber(end)]);
+
+        subplot(2,2,4);                                        % Create subplot
+        signalIndex = chIndex(4);
+        plot(sampleNumber,filteredplotData(:,4));              % Plot the filtered ecg for channel 2 of SENSOR_EXG1
+        legendName1 = [char(signalFormatArray(signalIndex)) ' ' char(signalNameArray(signalIndex)) ' (' char(signalUnitArray(signalIndex)) ')'];
+        legend(legendName1);                                   % Add legend to plot
+        xlim([sampleNumber(1) sampleNumber(end)]);
 
     end
 
-    elapsedTime = elapsedTime + toc;                               % Update elapsedTime with the time that elapsed since starting the timer
-    fprintf('The percentage of received packets: %d \n',deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).getPacketReceptionRateCurrent()); % Detect loss packets
-    deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).stopStreaming();                                       % Stop data streaming                                                       % Stop data streaming
-    deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).disconnect();
+    elapsedTime = elapsedTime + toc;                           % Update elapsedTime with the time that elapsed since starting the timer
+    tic;                                                       % Start timer
 
 end
+
+fprintf('The percentage of received packets: %d \n',deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).getPacketReceptionRateOverall()); % Detect loss packets
+deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).stopStreaming();                                       % Stop data streaming                                                       % Stop data streaming
+deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).disconnect();
+
+    function onConnected(deviceHandler, evt)
+        connectedPort = evt.ComPort;  
+        disp("Script: Connected on " + connectedPort);
+        if (configured==1) % a connected state is also triggered after configuring, so this differentiates the two
+            deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).startStreaming();
+            return
+        end
+        shimmerClone = deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).deepClone();
+        shimmerClone.setSamplingRateShimmer(fs);
+
+        shimmerClone.disableAllSensors();                                      % Disables all currently enabled sensors
+        shimmerClone.setEnabledAndDerivedSensorsAndUpdateMaps(0, 0);           % Resets configuration on enabled and derived sensors
+
+        sensorIds = javaArray('java.lang.Integer', 1);
+        sensorIds(1) = java.lang.Integer(deviceHandler.sensorClass.HOST_ECG);
+
+        shimmerClone.setSensorIdsEnabled(sensorIds);
+        shimmerClone.setConfigValueUsingConfigLabel(java.lang.Integer(deviceHandler.sensorClass.HOST_ECG),'Resolution',java.lang.Integer(1));
+        commType = javaMethod('valueOf', 'com.shimmerresearch.driver.Configuration$COMMUNICATION_TYPE', 'BLUETOOTH');
+        com.shimmerresearch.driverUtilities.AssembleShimmerConfig.generateSingleShimmerConfig(shimmerClone, commType);
+        deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).configureFromClone(shimmerClone);
+        configured = configured + 1;
+
+    end
+
+
 
 end
 

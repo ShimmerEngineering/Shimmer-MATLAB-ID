@@ -1,9 +1,15 @@
-classdef ShimmerDeviceHandler
+classdef ShimmerDeviceHandler < handle
+    events
+        DeviceConnected
+        DeviceDisconnected
+        DeviceConnectionLost
+    end
     properties
         obj
         bluetoothManager
         sensorClass
         orientationObj
+        cleanupHandle
     end
     
     methods
@@ -45,7 +51,12 @@ classdef ShimmerDeviceHandler
 
             this.sensorClass = javaObjectEDT('com.shimmerresearch.driver.Configuration$Shimmer3$SENSOR_ID');
             this.obj = com.shimmerresearch.tools.matlab.ShimmerJavaClass();
+            this.obj.setDebugMode(false);
             this.bluetoothManager = this.obj.mBluetoothManager;
+            javaHandle = handle(this.obj, 'callbackproperties');
+            javaHandle.PropertyChangeCallback = @(src,evt)this.handleJavaEvent(evt);
+
+
         end
         
         function quaternions = orientationModule(this, receivedData, dofMode)
@@ -98,6 +109,31 @@ classdef ShimmerDeviceHandler
                 end
             end
         end
+
+        function handleJavaEvent(this, evt)
+            try
+                eventObj = evt.getNewValue();   % this is MatlabConnectionEvent
+                state   = char(eventObj.state);
+                comPort = char(eventObj.comPort);
+            catch ME
+                disp("Error extracting event data:");
+                disp(ME.message);
+                return;
+            end
+        
+            switch state
+                case 'CONNECTED'
+                    fprintf("MATLAB: Device connected on %s\n", comPort);
+                    notify(this, 'DeviceConnected', ComPortEventData(comPort));
+            
+                case 'DISCONNECTED'
+                    fprintf("MATLAB: Device disconnected on %s\n", comPort);
+                    notify(this, 'DeviceDisconnected', ComPortEventData(comPort));
+            
+                case 'CONNECTION_LOST'
+                    fprintf("MATLAB: Connection lost on %s\n", comPort);
+                    notify(this, 'DeviceConnectionLost', ComPortEventData(comPort));
+            end
+        end
     end
 end
-        
