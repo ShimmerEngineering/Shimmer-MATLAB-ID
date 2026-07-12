@@ -15,7 +15,7 @@ function void = plotandwritepressureandtemperatureexample(comPort, captureDurati
 %                     is written to in a comma delimited format.
 %  OUTPUT: none
 %
-%  EXAMPLE: plotandwritepressureandtemperatureexample('7', 30, 'testdata.dat')
+%  EXAMPLE: plotandwritepressureandtemperatureexample('COM7', 30, 'testdata.dat')
 %
 %  See also plotandwriteexample ShimmerDeviceHandler
 
@@ -83,6 +83,7 @@ while (elapsedTime < captureDuration)
     if(~isempty(signalNameCellArray))
         chIndex(1) = find(startsWith(signalNameCellArray, 'Pressure'));
         chIndex(2) = find(startsWith(signalNameCellArray, 'Temperature'));
+        chIndex(3) = find(ismember(signalNameCellArray, 'Timestamp'));
     end
 
     if (firsttime==true && isempty(newData)~=1)
@@ -98,7 +99,7 @@ while (elapsedTime < captureDuration)
         plotData = [plotData; newData];                            % Update the plotDataBuffer with the new data
         numPlotSamples = size(plotData,1);
         numSamples = numSamples + size(newData,1);
-        timeStampNew = newData(:,4);                               % get timestamps
+        timeStampNew = newData(:,chIndex(3));                      % get timestamps
         timeStamp = [timeStamp; timeStampNew];
 
         if numSamples > NO_SAMPLES_IN_PLOT
@@ -128,12 +129,11 @@ while (elapsedTime < captureDuration)
 
 end
 
-elapsedTime = elapsedTime + toc;                                   % Stop timer
-fprintf('The percentage of received packets: %d \n',deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).getPacketReceptionRateCurrent()); % Detect loss packets
+fprintf('The percentage of received packets: %.2f \n',deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).getPacketReceptionRateOverall()); % Detect loss packets
 deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).stopStreaming();                                       % Stop data streaming                                                       % Stop data streaming
 deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).disconnect();
     function onConnected(deviceHandler, evt)
-        connectedPort = evt.ComPort;   % <-- rename variable
+        connectedPort = evt.ComPort;
 
         disp("Script: Connected on " + connectedPort);
         

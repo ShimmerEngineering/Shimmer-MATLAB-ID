@@ -1,5 +1,5 @@
 function shimmer = plotandwriteecgexample(comPort, captureDuration, fileName)
-%NEWPLOTANDWRITEECGEXAMPLE - Plotting ecg signal and write to file
+%PLOTANDWRITEECGEXAMPLE - Plotting ecg signal and write to file
 %  INPUT: comPort  - String value defining the COM port number for Shimmer
 %
 %  INPUT: captureDuration  - Numerical value defining the capture duration
@@ -8,14 +8,15 @@ function shimmer = plotandwriteecgexample(comPort, captureDuration, fileName)
 %
 %  OUTPUT: shimmer  - Object of the ShimmerDeviceHandler
 %
-%  EXAMPLE: newplotandwriteecgexample('COM5', 30, 'testdata.dat')
+%  EXAMPLE: plotandwriteecgexample('COM5', 30, 'testdata.dat')
 %
-%  See also newplotandwriteexample ShimmerDeviceHandler
+%  See also plotandwriteexample ShimmerDeviceHandler
 %
 % Example for Shimmer3
 
 %% definitions
 deviceHandler = ShimmerDeviceHandler();                                   % Define a handler
+shimmer = deviceHandler;
 configured = 0;
 fs = 512;                                                                  % sample rate in [Hz]
 firsttime = true;
@@ -46,10 +47,10 @@ if (HPF)
 end
 % lowpass filters for ExG channels
 if (LPF)
-    lpfexg1ch1 = com.shimmerresearch.algorithms.Filter(com.shimmerresearch.algorithms.Filter.LOW_PASS,fs,51.2);
-    lpfexg1ch2 = com.shimmerresearch.algorithms.Filter(com.shimmerresearch.algorithms.Filter.LOW_PASS,fs,51.2);
-    lpfexg2ch1 = com.shimmerresearch.algorithms.Filter(com.shimmerresearch.algorithms.Filter.LOW_PASS,fs,51.2);
-    lpfexg2ch2 = com.shimmerresearch.algorithms.Filter(com.shimmerresearch.algorithms.Filter.LOW_PASS,fs,51.2);
+    lpfexg1ch1 = com.shimmerresearch.algorithms.Filter(com.shimmerresearch.algorithms.Filter.LOW_PASS,fs,fs/2-1);
+    lpfexg1ch2 = com.shimmerresearch.algorithms.Filter(com.shimmerresearch.algorithms.Filter.LOW_PASS,fs,fs/2-1);
+    lpfexg2ch1 = com.shimmerresearch.algorithms.Filter(com.shimmerresearch.algorithms.Filter.LOW_PASS,fs,fs/2-1);
+    lpfexg2ch2 = com.shimmerresearch.algorithms.Filter(com.shimmerresearch.algorithms.Filter.LOW_PASS,fs,fs/2-1);
 end
 % bandstop filters for ExG channels;
 % cornerfrequencies at +1Hz and -1Hz from mains frequency
@@ -236,7 +237,7 @@ while (elapsedTime < captureDuration)
 
 end
 
-fprintf('The percentage of received packets: %d \n',deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).getPacketReceptionRateOverall()); % Detect loss packets
+fprintf('The percentage of received packets: %.2f \n',deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).getPacketReceptionRateOverall()); % Detect loss packets
 deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).stopStreaming();                                       % Stop data streaming                                                       % Stop data streaming
 deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).disconnect();
 

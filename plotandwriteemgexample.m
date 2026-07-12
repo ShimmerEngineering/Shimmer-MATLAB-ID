@@ -1,6 +1,6 @@
 function void = plotandwriteemgexample(comPort, captureDuration, fileName)
-%NEWPLOTANDWRITEEMGEXAMPLE - Plotting emg signal and write to file
-%  SYNOPSIS: newplotandwriteemgexample(comPort, captureDuration,
+%PLOTANDWRITEEMGEXAMPLE - Plotting emg signal and write to file
+%  SYNOPSIS: plotandwriteemgexample(comPort, captureDuration,
 %  fileName)
 %
 %  INPUT: comPort  - String value defining the COM port number for Shimmer
@@ -9,11 +9,11 @@ function void = plotandwriteemgexample(comPort, captureDuration, fileName)
 %
 %  INPUT: fileName - String value defining the name of the data file
 %
-%  OUTPUT: shimmer  - Object of the ShimmerHandleClass
+%  OUTPUT: none
 %
-%  EXAMPLE: newplotandwriteemgexample('COM5', 30, 'testdata.dat')
+%  EXAMPLE: plotandwriteemgexample('COM5', 30, 'testdata.dat')
 %
-%  See also newplotandwriteexample ShimmerDeviceHandler
+%  See also plotandwriteexample ShimmerDeviceHandler
 
 %% definitions
 deviceHandler = ShimmerDeviceHandler();                                   % Define a handler
@@ -193,9 +193,7 @@ while (elapsedTime < captureDuration)
 
 end
 
-elapsedTime = elapsedTime + toc;                               % Update elapsedTime with the time that elapsed since starting the timer
-
-fprintf('The percentage of received packets: %d \n',deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).getPacketReceptionRateCurrent()); % Detect loss packets
+fprintf('The percentage of received packets: %.2f \n',deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).getPacketReceptionRateOverall()); % Detect loss packets
 deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).stopStreaming();                                       % Stop data streaming                                                       % Stop data streaming
 deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).disconnect();
 
@@ -213,8 +211,6 @@ deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).disconnect()
 
         sensorIds = javaArray('java.lang.Integer', 1);
         sensorIds(1) = java.lang.Integer(deviceHandler.sensorClass.HOST_EMG);
-
-        shimmerClone.setSensorIdsEnabled(sensorIds);
 
         shimmerClone.setSensorIdsEnabled(sensorIds);
         shimmerClone.setConfigValueUsingConfigLabel(java.lang.Integer(deviceHandler.sensorClass.HOST_EMG),'Resolution',java.lang.Integer(1));

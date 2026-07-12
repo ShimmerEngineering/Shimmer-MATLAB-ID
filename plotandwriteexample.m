@@ -109,7 +109,7 @@ while (elapsedTime < captureDuration)
         plotData = [plotData; newData];                            % Update the plotDataBuffer with the new data
         numPlotSamples = size(plotData,1);
         numSamples = numSamples + size(newData,1);
-        timeStampNew = newData(:,11);                              % get timestamps
+        timeStampNew = newData(:,chIndex(1));                      % get timestamps
         timeStamp = [timeStamp; timeStampNew];
 
         if numSamples > NO_SAMPLES_IN_PLOT
@@ -162,7 +162,7 @@ while (elapsedTime < captureDuration)
     tic;                                                           % Start timer
 
 end
-fprintf('The percentage of received packets: %d \n',deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).getPacketReceptionRateOverall()); % Detect loss packets
+fprintf('The percentage of received packets: %.2f \n',deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).getPacketReceptionRateOverall()); % Detect loss packets
 deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).stopStreaming();                                       % Stop data streaming                                                       % Stop data streaming
 deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).disconnect();
 

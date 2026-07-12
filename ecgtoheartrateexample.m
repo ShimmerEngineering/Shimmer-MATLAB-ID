@@ -61,7 +61,7 @@ if (HPF)
 end
 % lowpass filters for ExG channels
 if (LPF)
-    lpfexg1ch1 = com.shimmerresearch.algorithms.Filter(com.shimmerresearch.algorithms.Filter.LOW_PASS,fs,51.2);
+    lpfexg1ch1 = com.shimmerresearch.algorithms.Filter(com.shimmerresearch.algorithms.Filter.LOW_PASS,fs,fs/2-1);
 end
 % bandstop filters for ExG channels;
 % cornerfrequencies at +1Hz and -1Hz from mains frequency
@@ -129,6 +129,7 @@ while (elapsedTime < captureDuration)
             fprintf(fid, '%s\n',headerLines{l});
         end
         fclose(fid);
+        firsttime = false;
     end
 
 
@@ -171,7 +172,7 @@ while (elapsedTime < captureDuration)
         newstoreData = [timeStampNew ECGData ECGDataFiltered newheartRate];
         storeData = [storeData; newstoreData];
 
-        dlmwrite(fileName, storeData, '-append', 'delimiter', '\t', 'precision',16);                % append the new data to the file in a tab delimited format
+        dlmwrite(fileName, newstoreData, '-append', 'delimiter', '\t', 'precision',16);                % append the new data to the file in a tab delimited format
 
 
         if numSamples > NO_SAMPLES_IN_PLOT
@@ -200,7 +201,7 @@ while (elapsedTime < captureDuration)
 
         subplot(3,1,3)
         plot(sampleNumber, heartRate);                             % plot the Heart Rate data
-        legend('Heart Rate (BPM', 'Location', 'West');
+        legend('Heart Rate (BPM)', 'Location', 'West');
         xlim([sampleNumber(1) sampleNumber(end)]);
         ylim('auto');
 
@@ -211,8 +212,7 @@ while (elapsedTime < captureDuration)
 
 end
 
-elapsedTime = elapsedTime + toc;                                   % stop timer
-fprintf('The percentage of received packets: %d \n',deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).getPacketReceptionRateCurrent()); % Detect loss packets
+fprintf('The percentage of received packets: %.2f \n',deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).getPacketReceptionRateOverall()); % Detect loss packets
 deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).stopStreaming();                                                      % stop data streaming
 deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).disconnect();                                                    % disconnect from shimmer
 

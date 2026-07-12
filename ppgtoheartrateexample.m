@@ -20,7 +20,7 @@ function void = ppgtoheartrateexample(comPort, captureDuration, fileName)
 %                     is written to in a comma delimited format.
 %  OUTPUT: none
 %
-%  EXAMPLE: ppgtoheartrateexample('7', 30, 'testdata.dat')
+%  EXAMPLE: ppgtoheartrateexample('COM7', 30, 'testdata.dat')
 %
 %  See also plotandwriteexample ShimmerDeviceHandler
 %
@@ -113,6 +113,7 @@ while (elapsedTime < captureDuration)
             fprintf(fid, '%s\n',headerLines{l});
         end
         fclose(fid);
+        firsttime = false;
     end
 
 
@@ -140,7 +141,7 @@ while (elapsedTime < captureDuration)
         newstoreData = [timeStampNew PPGData PPGDataFiltered newheartRate];
         storeData = [storeData; newstoreData];
 
-        dlmwrite(fileName, storeData, '-append', 'delimiter', '\t','precision',16);                % append the new data to the file in a tab delimited format
+        dlmwrite(fileName, newstoreData, '-append', 'delimiter', '\t','precision',16);                % append the new data to the file in a tab delimited format
 
 
         if numSamples > NO_SAMPLES_IN_PLOT
@@ -169,7 +170,7 @@ while (elapsedTime < captureDuration)
 
         subplot(3,1,3)
         plot(sampleNumber, heartRate);                             % plot the Heart Rate data
-        legend('Heart Rate (BPM');
+        legend('Heart Rate (BPM)');
         xlim([sampleNumber(1) sampleNumber(end)]);
         ylim('auto');
 
@@ -180,8 +181,7 @@ while (elapsedTime < captureDuration)
 
 end
 
-elapsedTime = elapsedTime + toc;                                   % stop timer
-fprintf('The percentage of received packets: %d \n',deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).getPacketReceptionRateCurrent()); % Detect loss packets
+fprintf('The percentage of received packets: %.2f \n',deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).getPacketReceptionRateOverall()); % Detect loss packets
 deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).stopStreaming();                                                      % stop data streaming
 
 deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).disconnect();
@@ -198,15 +198,14 @@ deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).disconnect()
         shimmerClone.setEnabledAndDerivedSensorsAndUpdateMaps(0, 0);           % Resets configuration on enabled and derived sensors
 
         sensorIds = javaArray('java.lang.Integer', 1);
-        sensorIds(1) = java.lang.Integer(deviceHandler.sensorClass.HOST_PPG_A13);
-
+        sensorIds(1) = java.lang.Integer(deviceHandler.sensorClass.HOST_PPG_A13);  % sensor ID 11: PPG_A13 on Shimmer3, PPG_A1 on Shimmer3R
+        hwid = shimmerClone.getHardwareVersionParsed();
         shimmerClone.setSensorIdsEnabled(sensorIds);
 
         commType = javaMethod('valueOf', 'com.shimmerresearch.driver.Configuration$COMMUNICATION_TYPE', 'BLUETOOTH');
         com.shimmerresearch.driverUtilities.AssembleShimmerConfig.generateSingleShimmerConfig(shimmerClone, commType);
         deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).configureFromClone(shimmerClone);
-        pause(20);
-        hwid = shimmerClone.getHardwareVersionParsed();
+        pause(20);                                                              % allow the device configuration to settle before querying the hardware version
         if hwid.equals('Shimmer3R')
             ppgsignalname = ['PPG_A1'];
         end

@@ -1,24 +1,25 @@
-function void = twoshimmerexample(comPort, comPort2 , captureDuration)
-%PLOTANDWRITEEXAMPLE - Demonstrate basic features of ShimmerHandleClass
+function void = twoshimmerexample(comPort, comPort2, captureDuration)
+%TWOSHIMMEREXAMPLE - Demonstrate streaming from two Shimmers simultaneously
 %
-%  PLOTANDWRITEEXAMPLE(COMPORT, CAPTUREDURATION, FILENAME) plots 3
-%  accelerometer signals, 3 gyroscope signals and 3 magnetometer signals,
-%  from the Shimmer paired with COMPORT. The function
-%  will stream data for a fixed duration of time defined by the constant
-%  CAPTUREDURATION. The function also writes the data in a tab ddelimited
-%  format to the file defined in FILENAME.
+%  TWOSHIMMEREXAMPLE(COMPORT, COMPORT2, CAPTUREDURATION) connects to and
+%  streams accelerometer, gyroscope and magnetometer data from the two
+%  Shimmers paired with COMPORT and COMPORT2. The function will stream
+%  data for a fixed duration of time defined by the constant
+%  CAPTUREDURATION, printing information on the data received from each
+%  device to the console.
 %
-%  SYNOPSIS: plotandwriteexample(comPort, captureDuration, fileName)
+%  SYNOPSIS: twoshimmerexample(comPort, comPort2, captureDuration)
 %
-%  INPUT: comPort - String value defining the COM port number for Shimmer
+%  INPUT: comPort - String value defining the COM port number for the
+%                   first Shimmer
+%  INPUT: comPort2 - String value defining the COM port number for the
+%                    second Shimmer
 %  INPUT: captureDuration - Numerical value defining the period of time
 %                           (in seconds) for which the function will stream
 %                           data from  the Shimmers.
-%  INPUT : fileName - String value defining the name of the file that data
-%                     is written to in a comma delimited format.
 %  OUTPUT: none
 %
-%  EXAMPLE: plotandwriteexample('COM3', 30, 'testdata.dat')
+%  EXAMPLE: twoshimmerexample('COM3', 'COM4', 30)
 %
 %  See also ShimmerDeviceHandler
 
@@ -29,13 +30,10 @@ configuredcom1 = 0;
 configuredcom2 = 0;
 CP1 = comPort;
 CP2 = comPort2;
-firsttime = true;
 
-% Note: these constants are only relevant to this examplescript and are not used
+% Note: this constant is only relevant to this examplescript and is not used
 % by the ShimmerDevice Handler
-NO_SAMPLES_IN_PLOT = 500;                                                  % Number of samples that will be displayed in the plot at any one time
 DELAY_PERIOD = 0.2;                                                        % A delay period of time in seconds between data read operations
-numSamples = 0;
 
 addpath('./Resources/')                                                    % directory containing supporting functions
 
@@ -49,7 +47,7 @@ addlistener(deviceHandler, 'DeviceConnected', @(src,evt) onConnected(src, evt));
 addlistener(deviceHandler, 'DeviceDisconnected',    @(src,evt) disp("Script: Disconnected"));
 addlistener(deviceHandler, 'DeviceConnectionLost',  @(src,evt) disp("Script: Lost connection"));
 
-while(isempty(deviceHandler.obj.receiveData(comPort2)))                                  % we wait here for the device to start streaming
+while(isempty(deviceHandler.obj.receiveData(comPort)) || isempty(deviceHandler.obj.receiveData(comPort2)))                                  % we wait here for both devices to start streaming
     pause(0.1);
 end
 elapsedTime = 0;                                                   % Reset to 0
@@ -125,9 +123,8 @@ while (elapsedTime < captureDuration)
 
 end
 
-elapsedTime = elapsedTime + toc;                                   % Stop timer
-fprintf('The percentage of received packets: %d \n',deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).getPacketReceptionRateCurrent()); % Detect loss packets
-fprintf('The percentage of received packets: %d \n',deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort2).getPacketReceptionRateCurrent()); % Detect loss packets
+fprintf('The percentage of received packets: %.2f \n',deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).getPacketReceptionRateOverall()); % Detect loss packets
+fprintf('The percentage of received packets: %.2f \n',deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort2).getPacketReceptionRateOverall()); % Detect loss packets
 deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).stopStreaming();                                       % Stop data streaming                                                       % Stop data streaming
 deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort2).stopStreaming();                                       % Stop data streaming                                                       % Stop data streaming
 
@@ -136,7 +133,7 @@ deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).disconnect()
 deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort2).disconnect();
 
     function onConnected(deviceHandler, evt)
-         if (CP1==evt.ComPort)
+         if (strcmp(CP1,evt.ComPort))
             disp("Script: Connected");
             if (configuredcom1==1) % a connected state is also triggered after configuring, so this differentiates the two
                 deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(evt.ComPort).startStreaming();
@@ -166,7 +163,7 @@ deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort2).disconnect(
             deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(evt.ComPort).configureFromClone(shimmerClone);
             configuredcom1 = configuredcom1 + 1;
         end
-        if (CP2==evt.ComPort)
+        if (strcmp(CP2,evt.ComPort))
             disp("Script: Connected");
             if (configuredcom2==1) % a connected state is also triggered after configuring, so this differentiates the two
                 deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(evt.ComPort).startStreaming();

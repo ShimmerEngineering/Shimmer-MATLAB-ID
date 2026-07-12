@@ -95,7 +95,6 @@ while (elapsedTime < captureDuration)
         continue;
     end
     newData = data(1);
-    %shimmer.checkDeviceConnection(newData);
 
     signalNameArray = data(2);
     signalFormatArray = data(3);
@@ -242,8 +241,7 @@ while (elapsedTime < captureDuration)
 
 end
 
-elapsedTime = elapsedTime + toc;                                                                  % Stop timer
-fprintf('The percentage of received packets: %d \n',deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).getPacketReceptionRateCurrent()); % Detect lost packets
+fprintf('The percentage of received packets: %.2f \n',deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).getPacketReceptionRateOverall()); % Detect lost packets
 deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).stopStreaming();
 % Stop data streaming
 deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).disconnect;
@@ -288,10 +286,11 @@ deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).disconnect;
 
         % Calculate camera position and angle for front view
         cameraPosition = quatrotate(quaternion,[0,0,0,1]);
-        if (deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).getHardwareVersion()~=3)
-            cameraUpVector = quatrotate(quaternion,[0,1,0,0]);  % orientation for Shimmer2/2r
+        hwid = deviceHandler.bluetoothManager.getShimmerDeviceBtConnected(comPort).getHardwareVersionParsed();
+        if (hwid.startsWith('Shimmer3'))
+            cameraUpVector = quatrotate(quaternion,[0,-1,0,0]); % orientation for Shimmer3/Shimmer3R
         else
-            cameraUpVector = quatrotate(quaternion,[0,-1,0,0]); % orientation for Shimmer3
+            cameraUpVector = quatrotate(quaternion,[0,1,0,0]);  % orientation for Shimmer2/2r
         end
     end
 
