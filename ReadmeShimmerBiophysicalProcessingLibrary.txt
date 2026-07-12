@@ -2,7 +2,7 @@ Shimmer Biophysical Processing Library (Close source code)
 REV 0.10 (ShimmerBiophysicalProcessingLibrary_Rev_0_10.jar)
 
 Changes since REV0.9
-- added ECGtpHRAdaptive, note this is a more accurate and efficient vs ECGtoHRAlgorithm. 
+- added ECGtoHRAdaptive, note this is a more accurate and efficient vs ECGtoHRAlgorithm.
 - ECGtoHRAlgorithm can be deprecated
 
 Changes since REV0.8

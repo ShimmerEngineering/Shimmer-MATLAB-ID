@@ -1,3 +1,5 @@
+# <before> is a MATLAB static-classpath directive: the jars listed below are
+# loaded ahead of MATLAB's bundled versions. Do not remove it.
 <before>
 
 libs/commons-math-2.2.jar

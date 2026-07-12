@@ -9,11 +9,19 @@ classdef ShimmerDeviceHandler < handle
         bluetoothManager
         sensorClass
         orientationObj
-        cleanupHandle
+        javaHandle
+        samplingRate
     end
-    
+
     methods
-        function this = ShimmerDeviceHandler()
+        function this = ShimmerDeviceHandler(samplingRate)
+            % samplingRate (Hz) is optional; it sets the orientation
+            % algorithm update period. Defaults to 51.2 Hz.
+            if nargin < 1 || isempty(samplingRate)
+                samplingRate = 51.2;
+            end
+            this.samplingRate = samplingRate;
+
             % List of JARs you want to add
             jarsToAdd = {
                 'ShimmerBiophysicalProcessingLibrary_Rev_0_10.jar'
@@ -25,10 +33,13 @@ classdef ShimmerDeviceHandler < handle
             
             % Get current dynamic classpath
             currentClasspath = javaclasspath('-dynamic');
-            
+
+            % Resolve JARs relative to this class file, not the caller's pwd
+            baseDir = fileparts(which('ShimmerDeviceHandler'));
+
             for i = 1:numel(jarsToAdd)
                 jarPath = jarsToAdd{i};
-                fullJarPath = fullfile(pwd, jarPath);  % Resolve relative to current directory
+                fullJarPath = fullfile(baseDir, jarPath);
             
                 % Check if the jar is already in classpath (case-insensitive)
                 isInClasspath = any(strcmpi(currentClasspath, fullJarPath));
@@ -45,18 +56,28 @@ classdef ShimmerDeviceHandler < handle
                 end
             end
 
-            % this.sampleRate = this.shimmer.getSamplingRateShimmer();
-            % relies on previous input / takes time to calibrated
-            this.orientationObj = javaObjectEDT('com.shimmerresearch.algorithms.orientation.GradDes3DOrientation', 1/51.2);
+            % Update period is derived from the configured sampling rate.
+            this.orientationObj = javaObjectEDT('com.shimmerresearch.algorithms.orientation.GradDes3DOrientation', 1/this.samplingRate);
 
             this.sensorClass = javaObjectEDT('com.shimmerresearch.driver.Configuration$Shimmer3$SENSOR_ID');
             this.obj = com.shimmerresearch.tools.matlab.ShimmerJavaClass();
             this.obj.setDebugMode(false);
             this.bluetoothManager = this.obj.mBluetoothManager;
-            javaHandle = handle(this.obj, 'callbackproperties');
-            javaHandle.PropertyChangeCallback = @(src,evt)this.handleJavaEvent(evt);
+            this.javaHandle = handle(this.obj, 'callbackproperties');
+            this.javaHandle.PropertyChangeCallback = @(src,evt)this.handleJavaEvent(evt);
 
 
+        end
+
+        function delete(this)
+            % Detach the MATLAB callback from the Java object so the
+            % handle can be garbage-collected.
+            try
+                if ~isempty(this.javaHandle)
+                    this.javaHandle.PropertyChangeCallback = [];
+                end
+            catch
+            end
         end
         
         function quaternions = orientationModule(this, receivedData, dofMode)
@@ -65,10 +86,13 @@ classdef ShimmerDeviceHandler < handle
             end
 
             receivedData = single(receivedData);
-            
+
             if strcmp(dofMode, '6dof')
-                [N, M] = size(receivedData);
-            
+                if size(receivedData, 2) < 7
+                    error('ShimmerDeviceHandler:orientationModule', '6dof mode requires at least 7 columns of received data.');
+                end
+                N = size(receivedData, 1);
+
                 acc = receivedData(:, 2:4); % Accelerometer (ax, ay, az)
                 gyr = receivedData(:, 5:7); % Gyroscope (gx, gy, gz)
 
@@ -84,18 +108,20 @@ classdef ShimmerDeviceHandler < handle
 
                     quaternions(i, :) = [qw, qx, qy, qz];
                 end
-            end
-            if strcmp(dofMode, '9dof')
-                [N, M] = size(receivedData);
-            
+            elseif strcmp(dofMode, '9dof')
+                if size(receivedData, 2) < 10
+                    error('ShimmerDeviceHandler:orientationModule', '9dof mode requires at least 10 columns of received data.');
+                end
+                N = size(receivedData, 1);
+
                 acc = receivedData(:, 2:4); % Accelerometer (ax, ay, az)
                 gyr = receivedData(:, 5:7); % Gyroscope (gx, gy, gz)
                 mag = receivedData(:, 8:10); % Magnetometer (mx, my, mz)
-                
-                quaternions = zeros(N, 4);
-                
+
+                quaternions = zeros(N, 4, 'single');
+
                 for i = 1:N
-             
+
                     this.orientationObj.update(acc(i, 1), acc(i, 2), acc(i, 3), ...
                                                gyr(i, 1) * (pi/180.0), gyr(i, 2) * (pi/180.0), gyr(i, 3) * (pi/180.0), ...
                                                mag(i, 1), mag(i, 2), mag(i, 3));
@@ -107,6 +133,8 @@ classdef ShimmerDeviceHandler < handle
 
                     quaternions(i, :) = [qw, qx, qy, qz];
                 end
+            else
+                error('ShimmerDeviceHandler:orientationModule', 'dofMode must be ''6dof'' or ''9dof''.');
             end
         end
 
@@ -133,6 +161,9 @@ classdef ShimmerDeviceHandler < handle
                 case 'CONNECTION_LOST'
                     fprintf("MATLAB: Connection lost on %s\n", comPort);
                     notify(this, 'DeviceConnectionLost', ComPortEventData(comPort));
+
+                otherwise
+                    % Intermediate states (e.g. connecting) are not surfaced.
             end
         end
     end
