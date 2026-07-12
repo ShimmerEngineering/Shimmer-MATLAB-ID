@@ -33,9 +33,11 @@ HOW TO USE:
 - Open the repository in matlab
 - Run the syncandparseexample function with the following parameters
     - uuid of the Verisense device, e.g. '00000000-0000-0000-0000-d02b463da2bb'
-    - the path of the binary files, e.g. 'C:\\\\Users\\\\VerisenseUser\\\\Desktop'
+    - the path of the binary files, e.g. 'C:\Users\VerisenseUser\Desktop'
     - the trial name, e.g. 'trialA'
     - the participant ID, e.g. 'participantB'
+
+NOTE: Parsing the synced binary files requires a Java runtime (`java` available on the system PATH).
 
 ## configureexample
 This example is used to set the Verisense device to default configuration settings. Note that the RTC clock is being set while connected
@@ -70,10 +72,10 @@ This example is used to perform a data collection. Erase data on the device, set
 
 HOW TO USE:
 - Open the repository in matlab
-- Run the syncandparseexample function with the following parameters
+- Run the datarecordingexample function with the following parameters
     - uuid of the Verisense device, e.g. '00000000-0000-0000-0000-d02b463da2bb'
     - duration of the data collection
     - the default operational configuration (ACCEL1/ACCEL2_GYRO/GSR_BATT_ACCEL1/GSR_BATT/PPG).
-    - the path of the binary files, e.g. 'C:\\\\Users\\\\WeiWentan\\\\Desktop'
+    - the path of the binary files, e.g. 'C:\Users\WeiWentan\Desktop'
     - the trial name, e.g. 'trialA'
     - the participant ID, e.g. 'participantB'

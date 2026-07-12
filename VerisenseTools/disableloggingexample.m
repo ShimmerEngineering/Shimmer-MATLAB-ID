@@ -15,9 +15,18 @@ function void = disableloggingexample( uuid)
 %
 %  EXAMPLE: disableloggingexample('00000000-0000-0000-0000-d02b463da2bb')
 
-exe_path = 'VerisenseConfigureAndSyncConsoleApp\VerisenseConfigureAndSyncConsole.exe';
+if ~ispc
+    error('disableloggingexample:unsupportedPlatform', ...
+        'VerisenseConfigureAndSyncConsole.exe is only supported on Windows.');
+end
 
-system([exe_path ' ' uuid ' DISABLE_LOGGING'])
+toolsDir = fileparts(mfilename('fullpath'));
+exe_path = fullfile(toolsDir, 'VerisenseConfigureAndSyncConsoleApp', 'VerisenseConfigureAndSyncConsole.exe');
+
+[status, cmdout] = system(['"' exe_path '" "' uuid '" DISABLE_LOGGING']);
+if status ~= 0
+    error('disableloggingexample:disableLoggingFailed', 'Failed to disable logging: %s', cmdout);
+end
 
 end
 

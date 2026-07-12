@@ -15,9 +15,18 @@ function void = erasedataexample( uuid)
 %
 %  EXAMPLE: erasedataexample('00000000-0000-0000-0000-d02b463da2bb')
 
-exe_path = 'VerisenseConfigureAndSyncConsoleApp\VerisenseConfigureAndSyncConsole.exe';
+if ~ispc
+    error('erasedataexample:unsupportedPlatform', ...
+        'VerisenseConfigureAndSyncConsole.exe is only supported on Windows.');
+end
 
-system([exe_path ' ' uuid ' ERASE_DATA'])
+toolsDir = fileparts(mfilename('fullpath'));
+exe_path = fullfile(toolsDir, 'VerisenseConfigureAndSyncConsoleApp', 'VerisenseConfigureAndSyncConsole.exe');
+
+[status, cmdout] = system(['"' exe_path '" "' uuid '" ERASE_DATA']);
+if status ~= 0
+    error('erasedataexample:eraseDataFailed', 'Failed to erase data: %s', cmdout);
+end
 
 end
 

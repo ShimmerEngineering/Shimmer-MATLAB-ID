@@ -19,9 +19,25 @@ function void = configureexample( uuid, defaultconfig)
 %
 %  EXAMPLE: configureexample('00000000-0000-0000-0000-d02b463da2bb', 'ACCEL1')
 
-exe_path = 'VerisenseConfigureAndSyncConsoleApp\VerisenseConfigureAndSyncConsole.exe';
+allowedConfigs = {'ACCEL1','ACCEL2_GYRO','GSR_BATT_ACCEL1','GSR_BATT','PPG'};
+if ~ismember(defaultconfig, allowedConfigs)
+    error('configureexample:invalidDefaultConfig', ...
+        'defaultconfig must be one of: %s', strjoin(allowedConfigs, ', '));
+end
 
-system([exe_path ' ' uuid ' WRITE_DEFAULT_OPCONFIG ' defaultconfig])
+if ~ispc
+    error('configureexample:unsupportedPlatform', ...
+        'VerisenseConfigureAndSyncConsole.exe is only supported on Windows.');
+end
+
+toolsDir = fileparts(mfilename('fullpath'));
+exe_path = fullfile(toolsDir, 'VerisenseConfigureAndSyncConsoleApp', 'VerisenseConfigureAndSyncConsole.exe');
+
+[status, cmdout] = system(['"' exe_path '" "' uuid '" WRITE_DEFAULT_OPCONFIG "' defaultconfig '"']);
+if status ~= 0
+    error('configureexample:writeDefaultOpConfigFailed', ...
+        'Failed to write default operational configuration: %s', cmdout);
+end
 
 end
 

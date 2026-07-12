@@ -23,16 +23,40 @@ function void = datarecordingexample( uuid, durationInMinutes, defaultconfig, bi
 %  INPUT : participantID - Participant ID.
 %  OUTPUT: none
 %
-%  EXAMPLE: datarecordingexample('00000000-0000-0000-0000-d02b463da2bb', 1, 'ACCEL1', 
-%  'C:\\Users\\WeiWentan\\Desktop', 'Trial', 'Participant')
+%  EXAMPLE: datarecordingexample('00000000-0000-0000-0000-d02b463da2bb', 1, 'ACCEL1',
+%  'C:\Users\WeiWentan\Desktop', 'Trial', 'Participant')
 
-exe_path = 'VerisenseConfigureAndSyncConsoleApp\VerisenseConfigureAndSyncConsole.exe';
+allowedConfigs = {'ACCEL1','ACCEL2_GYRO','GSR_BATT_ACCEL1','GSR_BATT','PPG'};
+if ~ismember(defaultconfig, allowedConfigs)
+    error('datarecordingexample:invalidDefaultConfig', ...
+        'defaultconfig must be one of: %s', strjoin(allowedConfigs, ', '));
+end
+
+if ~isnumeric(durationInMinutes) || ~isscalar(durationInMinutes) || durationInMinutes <= 0
+    error('datarecordingexample:invalidDuration', ...
+        'durationInMinutes must be a positive numeric scalar.');
+end
+
+if ~ispc
+    error('datarecordingexample:unsupportedPlatform', ...
+        'VerisenseConfigureAndSyncConsole.exe is only supported on Windows.');
+end
+
+toolsDir = fileparts(mfilename('fullpath'));
+exe_path = fullfile(toolsDir, 'VerisenseConfigureAndSyncConsoleApp', 'VerisenseConfigureAndSyncConsole.exe');
 
 disp('Erasing data')
-system([exe_path ' ' uuid ' ERASE_DATA'])
+[status, cmdout] = system(['"' exe_path '" "' uuid '" ERASE_DATA']);
+if status ~= 0
+    error('datarecordingexample:eraseDataFailed', 'Failed to erase data: %s', cmdout);
+end
 
 disp('Writing default operational config')
-system([exe_path ' ' uuid ' WRITE_DEFAULT_OPCONFIG ' defaultconfig])
+[status, cmdout] = system(['"' exe_path '" "' uuid '" WRITE_DEFAULT_OPCONFIG "' defaultconfig '"']);
+if status ~= 0
+    error('datarecordingexample:writeDefaultOpConfigFailed', ...
+        'Failed to write default operational configuration: %s', cmdout);
+end
 
 disp('Data Collecton start')
 pause(durationInMinutes * 60)
@@ -40,7 +64,10 @@ disp('Data Collecton end')
 
 syncandparseexample( uuid, binFilePath, trialName, participantID)
 
-system([exe_path ' ' uuid ' DISABLE_LOGGING'])
+[status, cmdout] = system(['"' exe_path '" "' uuid '" DISABLE_LOGGING']);
+if status ~= 0
+    error('datarecordingexample:disableLoggingFailed', 'Failed to disable logging: %s', cmdout);
+end
 
 end
 

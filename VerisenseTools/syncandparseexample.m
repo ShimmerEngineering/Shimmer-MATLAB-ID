@@ -21,33 +21,59 @@ function void = syncandparseexample( uuid, binFilePath, trialName, participantID
 %  INPUT : participantID - Participant ID.
 %  OUTPUT: none
 %
-%  EXAMPLE: syncandparseexample('00000000-0000-0000-0000-d02b463da2bb', 'C:\\Users\\Username\\Desktop', 
+%  EXAMPLE: syncandparseexample('00000000-0000-0000-0000-d02b463da2bb', 'C:\Users\Username\Desktop',
 %  'TrialA', 'ParticipantB')
 
 
-exe_path = 'VerisenseConfigureAndSyncConsoleApp\VerisenseConfigureAndSyncConsole.exe';
+if ~ispc
+    error('syncandparseexample:unsupportedPlatform', ...
+        'VerisenseConfigureAndSyncConsole.exe is only supported on Windows.');
+end
 
-system([exe_path ' ' uuid ' DATA_SYNC ' binFilePath ' ' trialName ' ' participantID])
+toolsDir = fileparts(mfilename('fullpath'));
+exe_path = fullfile(toolsDir, 'VerisenseConfigureAndSyncConsoleApp', 'VerisenseConfigureAndSyncConsole.exe');
+jar_path = fullfile(toolsDir, 'FileParser', 'VerisenseFileParserPC.jar');
 
-system(['java -jar FileParser\VerisenseFileParserPC.jar ' binFilePath '\' trialName '\' participantID])
+binFilePath = strrep(strrep(binFilePath, '\', filesep), '/', filesep);
 
-participantIDPath = [strrep(binFilePath,'\\','\') '\' trialName '\' participantID];
-participantIDDirectory = dir([participantIDPath '\*']);
+[status, cmdout] = system(['"' exe_path '" "' uuid '" DATA_SYNC "' binFilePath '" "' trialName '" "' participantID '"']);
+if status ~= 0
+    error('syncandparseexample:dataSyncFailed', 'Failed to sync data: %s', cmdout);
+end
+
+participantIDPath = fullfile(binFilePath, trialName, participantID);
+
+[status, cmdout] = system(['java -jar "' jar_path '" "' participantIDPath '"']);
+if status ~= 0
+    error('syncandparseexample:parseFailed', 'Failed to parse data: %s', cmdout);
+end
+
+participantIDDirectory = dir(participantIDPath);
+participantIDDirectory = participantIDDirectory([participantIDDirectory.isdir]);
 
 % remove currently directory and up one directory
 participantIDDirectory(ismember( {participantIDDirectory.name}, {'.', '..'})) = [];
 
-parsedFilesPath = [participantIDPath '\' participantIDDirectory(1).name '\ParsedFiles'];
-parsedFilesDirectory = dir([parsedFilesPath '\*.csv']);
+if isempty(participantIDDirectory)
+    error('syncandparseexample:noSyncFolder', 'No sync folder found in %s', participantIDPath);
+end
+
+[~, sortOrder] = sort([participantIDDirectory.datenum], 'descend');
+participantIDDirectory = participantIDDirectory(sortOrder);
+
+parsedFilesPath = fullfile(participantIDPath, participantIDDirectory(1).name, 'ParsedFiles');
+parsedFilesDirectory = dir(fullfile(parsedFilesPath, '*.csv'));
 dirSize = size(parsedFilesDirectory);
 if dirSize(1) == 0
     disp('Parsed file not found');
 else
+    plotCount = 0;
     for k = 1 : length(parsedFilesDirectory)
         % ignore metadata files
-        if isempty(strfind(parsedFilesDirectory(k).name, 'Metadata')) 
-            filepath = [parsedFilesPath '\' parsedFilesDirectory(k).name];
-            figure(k)
+        if isempty(strfind(parsedFilesDirectory(k).name, 'Metadata'))
+            filepath = fullfile(parsedFilesPath, parsedFilesDirectory(k).name);
+            plotCount = plotCount + 1;
+            figure(plotCount)
             plotfile(filepath)
         end
     end
